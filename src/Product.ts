@@ -189,30 +189,30 @@ interface AbstractProductEncoding {
 type ProductEncoding = AbstractProductEncoding | ConcreteProductEncoding;
 
 export class ProductEncoder {
-public static toJson(code: ProductEncoding): string {
-            return JSON.stringify(code);
-}
+    public static toJson(code: ProductEncoding): string {
+        return JSON.stringify(code);
+    }
     public static fromJson(json: string): ProductEncoding | null {
-            let code: any;
-            try {
-                    code = JSON.parse(json);
-            } catch {
-                    return null;
-            }
-            if (ProductEncoder.isProductEncoding(code)) {
-                    return code as ProductEncoding;
-            }
-            return null;
+        let code: any;
+        try {
+                code = JSON.parse(json);
+        } catch {
+                return null;
+        }
+        if (ProductEncoder.isProductEncoding(code)) {
+                return code as ProductEncoding;
+        }
+        return null;
     }
     private static isProductEncoding(code: any): boolean {
         if (code.isConcrete == true) {
-                if (code.concreteData == undefined) return false;
-                return true;
+            if (code.concreteData == undefined) return false;
+            return true;
         }
         if (code.isConcrete == false) {
-                if (code.subclassName == undefined
-                        || code.subclassEncoding == undefined) return false;
-                return ProductEncoder.isProductEncoding(code.subclassEncoding);
+            if (code.subclassName == undefined
+                || code.subclassEncoding == undefined) return false;
+            return ProductEncoder.isProductEncoding(code.subclassEncoding);
         }
         return false;
     }
