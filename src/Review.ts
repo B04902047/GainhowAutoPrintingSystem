@@ -6,3 +6,7 @@ export abstract class FrameDictionary {
 export interface Frame {
     
 }
+
+export class ReviewRegistrationInfo {
+
+}
