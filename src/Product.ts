@@ -195,12 +195,12 @@ export class ProductEncoder {
     public static fromJson(json: string): ProductEncoding | null {
         let code: any;
         try {
-                code = JSON.parse(json);
+            code = JSON.parse(json);
         } catch {
-                return null;
+            return null;
         }
         if (ProductEncoder.isProductEncoding(code)) {
-                return code as ProductEncoding;
+            return code as ProductEncoding;
         }
         return null;
     }
