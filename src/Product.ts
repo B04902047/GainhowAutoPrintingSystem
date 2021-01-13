@@ -37,14 +37,11 @@ export class SingleSheet extends Product {
         }
     }
     public getOrCreatePriceCalculator(): Pricing.PriceCalculator {
-
-    };
+    }
     public getOrCreateProduction(): Production.Production {
-
-    };
+    }
     public getOrCreateFrameDictionary(): Review.FrameDictionary {
-
-    };
+    }
 }
 
 class Page {
@@ -131,16 +128,6 @@ export abstract class Book extends Product {
         }
         return this.innerPages;
     }
-    public getOrCreatePriceCalculator(): Pricing.PriceCalculator {
-
-    };
-    public getOrCreateProduction(): Production.Production {
-
-    };
-    public getOrCreateFrameDictionary(): Review.FrameDictionary {
-
-    };
-
 }
 
 abstract class BindingStyle {
@@ -174,6 +161,59 @@ class SaddleStichBindingBookCover extends BookCover {
 }
 
 class SaddleStichBindingBook extends Book {
+    public getOrCreatePriceCalculator(): Pricing.PriceCalculator {
+        throw new Error("Method not implemented.");
+    }
+    public getOrCreateProduction(): Production.Production {
+        throw new Error("Method not implemented.");
+    }
+    public getOrCreateFrameDictionary(): Review.FrameDictionary {
+        throw new Error("Method not implemented.");
+    }
     bindingStyle = SaddleStichBinding.getInstance();
     cover = new SaddleStichBindingBookCover();
+}
+
+
+interface ConcreteProductEncoding {
+    isConcrete: true;
+    concreteData: Object;
+}
+
+interface AbstractProductEncoding {
+    isConcrete: false;
+    subclassName: string;
+    subclassEncoding: ProductEncoding;
+}
+
+type ProductEncoding = AbstractProductEncoding | ConcreteProductEncoding;
+
+export class ProductEncoder {
+    public static toJson(code: ProductEncoding): string {
+        return JSON.stringify(code);
+    }
+    public static fromJson(json: string): ProductEncoding | null {
+        let code: any;
+        try {
+            code = JSON.parse(json);
+        } catch {
+            return null;
+        }
+        if (ProductEncoder.isProductEncoding(code)) {
+            return code as ProductEncoding;
+        }
+        return null;
+    }
+    private static isProductEncoding(code: any): boolean {
+        if (code.isConcrete == true) {
+            if (code.concreteData == undefined) return false;
+            return true;
+        }
+        if (code.isConcrete == false) {
+            if (code.subclassName == undefined
+                || code.subclassEncoding == undefined) return false;
+            return ProductEncoder.isProductEncoding(code.subclassEncoding);
+        }
+        return false;
+    }
 }
