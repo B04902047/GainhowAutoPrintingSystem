@@ -176,12 +176,12 @@ class SaddleStichBindingBook extends Book {
 
 
 interface ConcreteProductEncoding {
-    isConcrete: boolean = true;
+    isConcrete: true;
     concreteData: Object;
 }
 
 interface AbstractProductEncoding {
-    isConcrete: boolean = false;
+    isConcrete: false;
     subclassName: string;
     subclassEncoding: ProductEncoding;
 }
