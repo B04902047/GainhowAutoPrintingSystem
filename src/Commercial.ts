@@ -3,21 +3,42 @@ import * as Ordering from "./Ordering";
 import * as Review from "./Review";
 class Member {
     private userDefinedProducts?: Array<ProductPrototype>;
-    private orderHistory?: Ordering.OrderImage;
+    private orderHistory?: Array<Ordering.OrderImage>;
+    private shoppingCart?: ShoppingCart;
     constructor(
         readonly accountId: string,
-        private shoppingCart: ShoppingCart,
     ) {
         
        
     }
-
+    
     getDiscount(): number {
         
     }
     
     logout(): Promise<void> {
 
+    }
+   
+
+    getOrLoadShoppingCart(): Promise<ShoppingCart> {
+        if (this.shoppingCart) return Promise.resolve(this.shoppingCart);
+        return this.loadAndSetShoppingCart(); 
+    }
+
+    loadAndSetShoppingCart(): Promise<ShoppingCart> {
+      //TODO : 跟server拿使用者的購物車資料，並將資料set到this.shoppingCart;
+        
+    }
+
+    getOrLoadOrderingHistory(): Promise<Array<Ordering.OrderImage>> {
+        if (this.orderHistory) return Promise.resolve(this.orderHistory);
+        return this.loadAndSetOrderingHistory(); 
+    }
+
+    loadAndSetOrderingHistory(): Promise<Array<Ordering.OrderImage>> {
+      //TODO : 跟server拿使用者儲存的樣板，並將資料set到this.orderHistory;
+        
     }
 
     getOrLoadUserDefinedProducts(): Promise<Array<ProductPrototype>> {
@@ -66,6 +87,7 @@ abstract class ShoppingCartItem {
 }
 
 class ShoppingCart {
+    private member?: Member;
     constructor (
         private ShoppingCartItems: {[itemIndex: string]:ShoppingCartItem}
     ) {
