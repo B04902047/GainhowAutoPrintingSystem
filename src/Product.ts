@@ -160,7 +160,7 @@ class SaddleStichBindingBookCover extends BookCover {
 
 }
 
-class SaddleStichBindingBook extends Book {
+export class SaddleStichBindingBook extends Book {
     public getOrCreatePriceCalculator(): Pricing.PriceCalculator {
         throw new Error("Method not implemented.");
     }
