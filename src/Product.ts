@@ -4,12 +4,41 @@ import * as Pricing from "./Pricing";
 import * as Review from "./Review";
 
 export abstract class Product {
-    public abstract getOrCreatePriceCalculator(): Pricing.PriceCalculator;
-    public abstract getOrCreateProduction(): Production.Production;
-    public abstract getOrCreateFrameDictionary(): Review.FrameDictionary;
+    protected abstract pricingCalculator: Pricing.PriceCalculator;
+    protected abstract production: Production.Production;
+    protected abstract frameDictionary: Review.FrameDictionary;
+    public getOrCreatePriceCalculator(): Pricing.PriceCalculator {
+        if(!this.pricingCalculator) this.createAndSetPriceCalculator();
+        return this.pricingCalculator;
+    }
+    public getOrCreateProduction(): Production.Production {
+        if(!this.production) this.createAndSetProduction();
+        return this.production;
+    }
+    public getOrCreateFrameDictionary(): Review.FrameDictionary {
+        if(!this.frameDictionary) this.createAndSetFrameDictionary();
+        return this.frameDictionary;
+    }
+    private createAndSetPriceCalculator(): void {
+        this.pricingCalculator = this.createPriceCalculator();      
+    }
+    private createAndSetProduction(): void {
+        this.production = this.createProduction();   
+    }
+    private createAndSetFrameDictionary(): void {
+        this.frameDictionary = this.createFrameDictionary();
+    }
+    protected abstract createPriceCalculator(): Pricing.PriceCalculator;
+    protected abstract createProduction(): Production.Production;
+    protected abstract createFrameDictionary(): Review.FrameDictionary;
 }
 
 export class SingleSheet extends Product {
+    protected pricingCalculator: Pricing.SingleSheetHardCodeConfiguratedPriceCalculator;
+    protected createPriceCalculator(): Pricing.SingleSheetHardCodeConfiguratedPriceCalculator {
+        return new Pricing.SingleSheetHardCodeConfiguratedPriceCalculator(this);
+    }
+
     private frontSide: Page;
     private backSide?: Page;
     constructor(
@@ -35,12 +64,6 @@ export class SingleSheet extends Product {
                 this.backSide = undefined;
             }
         }
-    }
-    public getOrCreatePriceCalculator(): Pricing.PriceCalculator {
-    }
-    public getOrCreateProduction(): Production.Production {
-    }
-    public getOrCreateFrameDictionary(): Review.FrameDictionary {
     }
 }
 
@@ -161,15 +184,11 @@ class SaddleStichBindingBookCover extends BookCover {
 }
 
 export class SaddleStichBindingBook extends Book {
-    public getOrCreatePriceCalculator(): Pricing.PriceCalculator {
-        throw new Error("Method not implemented.");
+    protected pricingCalculator: Pricing.SaddleStichBindingBookSingletonRequestConfiguratedPriceCalculator;
+    public createPriceCalculator(): Pricing.SaddleStichBindingBookSingletonRequestConfiguratedPriceCalculator {
+        return new Pricing.SaddleStichBindingBookSingletonRequestConfiguratedPriceCalculator(this);
     }
-    public getOrCreateProduction(): Production.Production {
-        throw new Error("Method not implemented.");
-    }
-    public getOrCreateFrameDictionary(): Review.FrameDictionary {
-        throw new Error("Method not implemented.");
-    }
+    
     bindingStyle = SaddleStichBinding.getInstance();
     cover = new SaddleStichBindingBookCover();
 }
