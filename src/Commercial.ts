@@ -7,54 +7,51 @@ class Member {
     private shoppingCart?: ShoppingCart;
     constructor(
         readonly accountId: string,
-    ) {
-        
-       
-    }
+    ) {}
     
-    getDiscount(): number {
-        
-    }
+    public getDiscount(): number {}
     
-    logout(): Promise<void> {
+    public logout(): Promise<void> {}
 
-    }
-   
-
-    getOrLoadShoppingCart(): Promise<ShoppingCart> {
+    public getOrLoadShoppingCart(): Promise<ShoppingCart> {
         if (this.shoppingCart) return Promise.resolve(this.shoppingCart);
         return this.loadAndSetShoppingCart(); 
     }
 
-    loadAndSetShoppingCart(): Promise<ShoppingCart> {
-      //TODO : 跟server拿使用者的購物車資料，並將資料set到this.shoppingCart;
-        
+    private async loadAndSetShoppingCart(): Promise<ShoppingCart> {
+        try {
+            this.shoppingCart = await this.loadShoppingCart();
+            return this.shoppingCart;
+        } catch {
+            // TODO: error handling
+        }
     }
 
-    getOrLoadOrderingHistory(): Promise<Array<Ordering.OrderImage>> {
+    private loadShoppingCart(): Promise<ShoppingCart> {
+        //TODO : 跟server拿使用者的購物車資料，並將資料set到this.shoppingCart;
+    }
+
+    public getOrLoadOrderingHistory(): Promise<Array<Ordering.OrderImage>> {
         if (this.orderHistory) return Promise.resolve(this.orderHistory);
         return this.loadAndSetOrderingHistory(); 
     }
 
-    loadAndSetOrderingHistory(): Promise<Array<Ordering.OrderImage>> {
-      //TODO : 跟server拿使用者儲存的樣板，並將資料set到this.orderHistory;
-        
+    private loadAndSetOrderingHistory(): Promise<Array<Ordering.OrderImage>> {
+        //TODO : 跟server拿使用者儲存的樣板，並將資料set到this.orderHistory;
     }
 
-    getOrLoadUserDefinedProducts(): Promise<Array<ProductPrototype>> {
+    public getOrLoadUserDefinedProducts(): Promise<Array<ProductPrototype>> {
         if (this.userDefinedProducts) return Promise.resolve(this.userDefinedProducts);
         return this.loadAndSetUserDefinedProducts(); 
     }
 
-    loadAndSetUserDefinedProducts(): Promise<Array<ProductPrototype>> {
-      //TODO : 跟server拿使用者儲存的樣板，並將資料set到this.userDefinedProducts;
-        
+    private loadAndSetUserDefinedProducts(): Promise<Array<ProductPrototype>> {
+        //TODO : 跟server拿使用者儲存的樣板，並將資料set到this.userDefinedProducts;
     }
 
-    addUserDefinedProducts(): Promise<void> {
-
-    }
-
+    public addUserDefinedProducts(): Promise<void> {}
+    private updateToServer(): Promise<void> {}
+    private reloadFromServer(): Promise<void> {}
 }
 
 
