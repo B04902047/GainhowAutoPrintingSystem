@@ -33,7 +33,14 @@ export abstract class Product {
     protected abstract createFrameDictionary(): Review.FrameDictionary;
 }
 
-export class SingleSheet extends Product {
+export class SingleSheet extends Product {    
+    protected frameDictionary: Review.SingleSheetFrameDictionary;
+    protected createProduction(): Production.Production {
+        throw new Error("Method not implemented.");
+    }
+    protected createFrameDictionary(): Review.SingleSheetFrameDictionary {
+        return new Review.SingleSheetFrameDictionary(this);
+    }
     protected pricingCalculator: Pricing.SingleSheetHardCodeConfiguratedPriceCalculator;
     protected createPriceCalculator(): Pricing.SingleSheetHardCodeConfiguratedPriceCalculator {
         return new Pricing.SingleSheetHardCodeConfiguratedPriceCalculator(this);
@@ -42,6 +49,8 @@ export class SingleSheet extends Product {
     private frontSide: Page;
     private backSide?: Page;
     constructor(
+        public width: number,
+        public height: number,
         private isDoubleSided: boolean,
         public paperTexture: PaperTexture,
         public frontSideCoat?: Coat,
@@ -133,6 +142,8 @@ export abstract class Book extends Product {
     } = {};
     protected readonly bindingStyle: BindingStyle;
     constructor(
+        public coverWidth: number,
+        public coverHieght: number,
         public numberOfPages: number,
         public coverPaperTexture: PaperTexture,
         public innerPagesPaperTexture: PaperTexture,
@@ -184,6 +195,35 @@ class SaddleStichBindingBookCover extends BookCover {
 }
 
 export class SaddleStichBindingBook extends Book {
+    
+    protected frameDictionary: Review.SaddleStichBindindBookFrameDictionary;
+    constructor(
+        coverWidth: number, 
+        coverHieght: number, 
+        numberOfPages: number, 
+        coverPaperTexture: PaperTexture, 
+        innerPagesPaperTexture: PaperTexture, 
+        coverCoating?: Coat, 
+        innerPageCoating?: Coat
+    ) {
+        super(
+            coverWidth, 
+            coverHieght, 
+            numberOfPages, 
+            coverPaperTexture, 
+            innerPagesPaperTexture, 
+            coverCoating, 
+            innerPageCoating
+        );
+    }
+    
+   
+    protected createProduction(): Production.Production {
+        throw new Error("Method not implemented.");
+    }
+    protected createFrameDictionary(): Review.FrameDictionary {
+        return  new Review.SaddleStichBindindBookFrameDictionary(this);
+    }
     protected pricingCalculator: Pricing.SaddleStichBindingBookSingletonRequestConfiguratedPriceCalculator;
     public createPriceCalculator(): Pricing.SaddleStichBindingBookSingletonRequestConfiguratedPriceCalculator {
         return new Pricing.SaddleStichBindingBookSingletonRequestConfiguratedPriceCalculator(this);
@@ -205,7 +245,7 @@ interface AbstractProductEncoding {
     subclassEncoding: ProductEncoding;
 }
 
-type ProductEncoding = AbstractProductEncoding | ConcreteProductEncoding;
+export type ProductEncoding = AbstractProductEncoding | ConcreteProductEncoding;
 
 export class ProductEncoder {
     public static toJson(code: ProductEncoding): string {

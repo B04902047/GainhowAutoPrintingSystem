@@ -86,7 +86,7 @@ abstract class ShoppingCartItem {
 class ShoppingCart {
     private member?: Member;
     constructor (
-        private ShoppingCartItems: {[itemIndex: string]:ShoppingCartItem}
+        private shoppingCartItems: {[itemIndex: string]:ShoppingCartItem}
     ) {
         
     }
