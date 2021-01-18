@@ -18,12 +18,18 @@ export abstract class FrameDictionary {
     protected abstract createFrames(): { [frameIndex: string]: Frame };
 }
 
-export abstract class Frame {
-    protected abstract widthWithBleeding: number; //還沒初始化
-    protected abstract heightWithBleeding: number; //還沒初始化
-    protected foldLines: Array<Line>; //有可能是0條，但不會是undefined
-    protected cutLines: Array<Line>; //有可能是0條，但不會是undefined
-    constructor() {
+interface Frame {
+
+}
+
+export abstract class RectangleFrame implements Frame {
+
+    protected foldLines: Array<Line>;   // 有可能是0條，但不會是undefined
+    protected cutLines: Array<Line>;    // 有可能是0條，但不會是undefined
+    constructor(
+        protected width: number,
+        protected height: number
+    ) {
         this.foldLines = this.createFoldLines();
         this.cutLines = this.createCutLines();
     }
@@ -42,128 +48,138 @@ class Line {
 }
 
 
-class StandardRectangleFrame extends Frame {
-    protected widthWithBleeding: number;
-    protected heightWithBleeding: number;
+class BleededRectangleFrame extends RectangleFrame {
     protected createFoldLines(): Line[] {
         return [];
     }
-    protected createCutLines(): Line[] { // TODO FIRST
-        throw new Error("Method not implemented.");
+    protected createCutLines(): Line[] {
+        let leftCutLine: Line = new Line(
+            this.cutError, 0,
+            this.cutError, this.height
+        );
+        let rightCutLine: Line = new Line(
+            this.width - this.cutError, 0,
+            this.width - this.cutError, this.height
+        );
+        let topCutLine: Line = new Line(
+            0, this.cutError,
+            this.width, this.cutError
+        );
+        let bottomCutLine: Line = new Line(
+            0, this.height - this.cutError,
+            this.width, this.height - this.cutError
+        );
+        return [
+            leftCutLine,
+            rightCutLine,
+            topCutLine,
+            bottomCutLine
+        ];
     }
 
     constructor(
-        public readonly width: number,
-        public readonly height: number,
+        public readonly widthWithoutBleeding: number,
+        public readonly heightWithoutBleeding: number,
         public readonly cutError: number,
     ) {
-        super();
-        this.widthWithBleeding = width + (2 * cutError);
-        this.heightWithBleeding = height + (2 * cutError);
+        super(
+            widthWithoutBleeding + (2 * cutError),
+            heightWithoutBleeding + (2 * cutError)
+        );
     }
 }
 
-abstract class BookCoverFrame extends Frame {
-    constructor() {
-        super();
+abstract class BookCoverFrame extends BleededRectangleFrame {
+    constructor(
+        widthWithoutBleeding: number,
+        heightWithoutBleeding: number,
+        cutError: number
+    ) {
+        super(
+            widthWithoutBleeding,
+            heightWithoutBleeding,
+            cutError,
+        );
     }
+    protected abstract createFoldLines(): Line[];
 
 }
 abstract class BookFrameDictionary extends FrameDictionary {
     protected coverFrame: BookCoverFrame;
-    protected innerPageFrames: { [pageIndex: string]: StandardRectangleFrame };
+    protected innerPageFrames: { [pageIndex: string]: BleededRectangleFrame };
     
     constructor(product: Product.Book)   {
         super(product);
         this.coverFrame = this.createBookCoverFrame();
-        let innerFramePrototype: StandardRectangleFrame = this.createInnerPageFramePrototype();
+        let innerFramePrototype: BleededRectangleFrame = this.createInnerPageFramePrototype();
         this.innerPageFrames = {};
         for (let i=1; i<=product.numberOfPages; i++) {
             this.innerPageFrames[i] = innerFramePrototype;
         }
     }
-    protected createFrames(): { [frameIndex: string]: Frame } {
-        let frames: { [frameIndex: string]: Frame };
+    protected createFrames(): { [frameIndex: string]: RectangleFrame } {
+        let frames: { [frameIndex: string]: RectangleFrame };
         frames['cover'] = this.coverFrame;
         frames = Object.assign(frames, this.innerPageFrames);
         return frames;
     }
 
     protected abstract createBookCoverFrame(): BookCoverFrame;
-    protected abstract createInnerPageFramePrototype(): StandardRectangleFrame;
+    protected abstract createInnerPageFramePrototype(): BleededRectangleFrame;
 }
 
 class SaddleStichBindindBookCoverFrame extends BookCoverFrame {
-    constructor(
-        public readonly width: number,
-        public readonly height: number,
-        public readonly margin: number,
-        public readonly padding: number
-    ) {
-        super();
-    }
     protected createFoldLines(): Line[] {
-        let middle = this.width / 2;
+        let middle: number = this.width / 2;
         let middleLine: Line = new Line(
             middle, 0,
             middle, this.height
         )
         return [middleLine];
     }
-    protected createCutLines(): Line[] {
-        throw new Error("Method not implemented.");
-    }
-    
 }
 export class SingleSheetFrameDictionary extends FrameDictionary {
     constructor(
-        product: Product.SingleSheet 
+        readonly product: Product.SingleSheet 
         ) {
-            super(product);
+        super(product);
     }
-    private static readonly STANDARD_MARGIN = 2;
-    private static readonly STANDARD_PADDING = 2;
-    protected createFrames(): { [frameIndex: string]: Frame; } {
-        let singleSheet: Product.SingleSheet = this.product as Product.SingleSheet;
-        let frame = new StandardRectangleFrame (
-            singleSheet.width,
-            singleSheet.height,
-            SingleSheetFrameDictionary.STANDARD_MARGIN,
-            SingleSheetFrameDictionary.STANDARD_PADDING
+    private static readonly CUT_ERROR = 2;
+    protected createFrames(): { [frameIndex: string]: RectangleFrame; } {
+        let frame = new BleededRectangleFrame (
+            this.product.width,
+            this.product.height,
+            SingleSheetFrameDictionary.CUT_ERROR,
         );
         return {
             "正面": frame,
-            "背面": (singleSheet.getIsDoubleSided()) ? frame : undefined
+            "背面": (this.product.getIsDoubleSided()) ? frame : undefined
         };
     }
     
 
 }
 export class SaddleStichBindindBookFrameDictionary extends BookFrameDictionary {
-    private static readonly INNER_PAGE_MARGIN = 3;
-    private static readonly INNER_PAGE_PADDING = 3;
-    private static readonly COVER_MARGIN = 3;
-    private static readonly COVER_PADDING = 3;
+    private static readonly INNER_PAGE_CUT_ERROR = 3;
+    private static readonly COVER_CUT_ERROR = 3;
     //TODO: 計算、定義騎馬釘書的內頁出血、安全距離
-    constructor(product: Product.SaddleStichBindingBook) {
+    constructor(
+        readonly product: Product.SaddleStichBindingBook
+    ) {
         super(product);       
     }
     protected createBookCoverFrame(): SaddleStichBindindBookCoverFrame {
-        let product: Product.SaddleStichBindingBook = this.product as Product.SaddleStichBindingBook;
         return new SaddleStichBindindBookCoverFrame(
-            product.coverWidth,
-            product.coverHieght,
-            SaddleStichBindindBookFrameDictionary.COVER_MARGIN,
-            SaddleStichBindindBookFrameDictionary.COVER_PADDING
+            this.product.coverWidth,
+            this.product.coverHieght,
+            SaddleStichBindindBookFrameDictionary.COVER_CUT_ERROR
         );
     }
-    protected createInnerPageFramePrototype(): StandardRectangleFrame {
-        let product: Product.SaddleStichBindingBook = this.product as Product.SaddleStichBindingBook;
-        return new StandardRectangleFrame(
-            product.coverWidth,
-            product.coverHieght,
-            SaddleStichBindindBookFrameDictionary.INNER_PAGE_MARGIN,
-            SaddleStichBindindBookFrameDictionary.INNER_PAGE_PADDING
+    protected createInnerPageFramePrototype(): BleededRectangleFrame {
+        return new BleededRectangleFrame(
+            this.product.coverWidth,
+            this.product.coverHieght,
+            SaddleStichBindindBookFrameDictionary.INNER_PAGE_CUT_ERROR
         );
     }
 }
