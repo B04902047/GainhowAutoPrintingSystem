@@ -19,8 +19,8 @@ export abstract class FrameDictionary {
 }
 
 export abstract class Frame {
-    protected widthWithBleeding: number; //還沒初始化
-    protected heightWithBleeding: number; //還沒初始化
+    protected abstract widthWithBleeding: number; //還沒初始化
+    protected abstract heightWithBleeding: number; //還沒初始化
     protected foldLines: Array<Line>; //有可能是0條，但不會是undefined
     protected cutLines: Array<Line>; //有可能是0條，但不會是undefined
     constructor() {
@@ -43,20 +43,23 @@ class Line {
 
 
 class StandardRectangleFrame extends Frame {
+    protected widthWithBleeding: number;
+    protected heightWithBleeding: number;
     protected createFoldLines(): Line[] {
         return [];
     }
-    protected createCutLines(): Line[] {
+    protected createCutLines(): Line[] { // TODO FIRST
         throw new Error("Method not implemented.");
     }
 
     constructor(
         public readonly width: number,
         public readonly height: number,
-        public readonly margin: number,
-        public readonly padding: number
+        public readonly cutError: number,
     ) {
         super();
+        this.widthWithBleeding = width + (2 * cutError);
+        this.heightWithBleeding = height + (2 * cutError);
     }
 }
 
@@ -73,10 +76,10 @@ abstract class BookFrameDictionary extends FrameDictionary {
     constructor(product: Product.Book)   {
         super(product);
         this.coverFrame = this.createBookCoverFrame();
-        let innerFrame = this.createInnerPageFramePrototype();
+        let innerFramePrototype: StandardRectangleFrame = this.createInnerPageFramePrototype();
         this.innerPageFrames = {};
-        for(let i=1; i<=product.numberOfPages; i++) {
-            this.innerPageFrames[i] = innerFrame;
+        for (let i=1; i<=product.numberOfPages; i++) {
+            this.innerPageFrames[i] = innerFramePrototype;
         }
     }
     protected createFrames(): { [frameIndex: string]: Frame } {
@@ -100,14 +103,12 @@ class SaddleStichBindindBookCoverFrame extends BookCoverFrame {
         super();
     }
     protected createFoldLines(): Line[] {
-        let middle = this.width/2;
-        let foldLines: Line[] = [];
-        let foldLine: Line = new Line(
+        let middle = this.width / 2;
+        let middleLine: Line = new Line(
             middle, 0,
             middle, this.height
         )
-        foldLines.push(foldLine);
-        return foldLines;
+        return [middleLine];
     }
     protected createCutLines(): Line[] {
         throw new Error("Method not implemented.");

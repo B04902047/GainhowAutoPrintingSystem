@@ -32,7 +32,7 @@ abstract class ConfiguratedPriceCalculator extends PriceCalculator {
 }
 
 class PricingConfig {
-
+//「上膜」「裝訂」「紙張」和「印工」  單張沒有裝訂的Config
 }
 
 // ConfiguratedPriceCalculator的實作方式一 : 去資料庫取得

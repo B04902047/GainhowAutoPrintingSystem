@@ -80,7 +80,7 @@ class Page {
 
 }
 
-class PaperTexture {
+export class PaperTexture {
     constructor(
         readonly material: PaperMaterial,
         readonly thickness: number,
@@ -195,6 +195,7 @@ class SaddleStichBindingBookCover extends BookCover {
 }
 
 export class SaddleStichBindingBook extends Book {
+    protected production: Production.Production;
     
     protected frameDictionary: Review.SaddleStichBindindBookFrameDictionary;
     constructor(
@@ -218,8 +219,8 @@ export class SaddleStichBindingBook extends Book {
     }
     
    
-    protected createProduction(): Production.Production {
-        throw new Error("Method not implemented.");
+    protected createProduction(): Production.SaddleStichBingingBookProduction {
+        return new Production.SaddleStichBingingBookProduction(this);
     }
     protected createFrameDictionary(): Review.FrameDictionary {
         return  new Review.SaddleStichBindindBookFrameDictionary(this);
