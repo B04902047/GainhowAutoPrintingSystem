@@ -4,28 +4,36 @@ export interface Production {
     isProducible(): boolean;
 }
 
-abstract class BookProduction implements Production{
+export class SingleSheetProduction implements Production {
+    isProducible(): boolean {
+        throw new Error('Method not implemented.');
+    }
+}
+
+export abstract class BookProduction implements Production {
+    abstract readonly bindingStyle: BookBindingStyle;
     constructor(
         protected readonly product: Product.Book
-    ) {
-        
-    }
+    ) {}
     isProducible(): boolean {  //不知道要不要在這裡，或是往下傳
         throw new Error('Method not implemented.');
     }
+
+    public abstract estimateSpineWidth(): number;
     protected abstract innerPageShouldCoat(): boolean;
     protected abstract coverShouldCoat(): boolean;
+    
 
-    protected validPaperTextureForInnerPages: Array<Product.PaperTexture>;  //不要lazy innt? => 使用者拉開下拉選單的時候會等待一下才有東西，使用體驗不好? 但是先init的話，不知道要取得的時候，資料已經回來了沒有
-    protected validPaperTextureForCover: Array<Product.PaperTexture>;
+    protected validPaperTextureForInnerPages: Array<Product.Paper>;  //不要lazy innt? => 使用者拉開下拉選單的時候會等待一下才有東西，使用體驗不好? 但是先init的話，不知道要取得的時候，資料已經回來了沒有
+    protected validPaperTextureForCover: Array<Product.Paper>;
     
 
     // 待討論
-    public async getValidPaperTexturesForInnerPages(): Promise<Array<Product.PaperTexture>> {
+    public async getValidPaperTexturesForInnerPages(): Promise<Array<Product.Paper>> {
         if (!this.validPaperTextureForInnerPages) await this.createAndSetValidPaperTextureForInnerPages();
         return Promise.resolve(this.validPaperTextureForInnerPages);
     }
-    public async getValidPaperTexturesForCover(): Promise<Array<Product.PaperTexture>> {
+    public async getValidPaperTexturesForCover(): Promise<Array<Product.Paper>> {
         if (!this.validPaperTextureForCover) await this.createAndSetValidPaperTextureForCover();
         return Promise.resolve(this.validPaperTextureForCover);
     }
@@ -38,24 +46,41 @@ abstract class BookProduction implements Production{
     protected async createAndSetValidPaperTextureForCover(): Promise<void> {
         this.validPaperTextureForCover = await this.loadValidPaperTextureForCover();
     }
-    protected abstract loadValidPaperTextureForInnerPages(): Promise<Array<Product.PaperTexture>>;
-    protected abstract loadValidPaperTextureForCover(): Promise<Array<Product.PaperTexture>>;
+    protected abstract loadValidPaperTextureForInnerPages(): Promise<Array<Product.Paper>>;
+    protected abstract loadValidPaperTextureForCover(): Promise<Array<Product.Paper>>;
 
 }
 
-export class SaddleStichBingingBookProduction extends BookProduction{
-    protected innerPageShouldCoat(): boolean {
+export class SaddleStichBingingBookProduction extends BookProduction {
+    readonly bindingStyle: SaddleStichBinding = SaddleStichBinding.getInstance();
+    public estimateSpineWidth(): number { return 0; }
+    protected innerPageShouldCoat(): boolean { return false; }
+    protected coverShouldCoat(): boolean { return true; }
+    protected loadValidPaperTextureForInnerPages(): Promise<Product.Paper[]> {
         throw new Error('Method not implemented.');
     }
-    protected coverShouldCoat(): boolean {
-        throw new Error('Method not implemented.');
-    }
-    protected loadValidPaperTextureForInnerPages(): Promise<Product.PaperTexture[]> {
-        throw new Error('Method not implemented.');
-    }
-    protected loadValidPaperTextureForCover(): Promise<Product.PaperTexture[]> {
+    protected loadValidPaperTextureForCover(): Promise<Product.Paper[]> {
         throw new Error('Method not implemented.');
     }
 }
 
-//要想要怎麼設計一個Requestor 去要各類別所有可用的紙質
+export abstract class BookBindingStyle {
+}
+
+class ButterflyBinding extends BookBindingStyle {
+    
+}
+
+class PerfectBinding extends BookBindingStyle {
+    
+}
+
+export class SaddleStichBinding extends BookBindingStyle {
+    private static instance: SaddleStichBinding = new SaddleStichBinding();
+    private constructor() {
+        super();
+    }
+    public static getInstance(): SaddleStichBinding {
+        return SaddleStichBinding.instance;
+    };
+}

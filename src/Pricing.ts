@@ -9,19 +9,19 @@ export abstract class PriceCalculator {
     };
 }
 
-//實作方案一: 傳送產品資料，直接和AIPS取得價錢
+// 實作方案一：傳送產品資料，直接和AIPS取得價錢
 abstract class BusyPriceRequestor extends PriceCalculator {
     protected readonly requestUrl: string;
 }
 
-//實作方案二: 取得產品參數，計算出價錢之後回傳
+// 實作方案二：取得產品參數，計算出價錢之後回傳
 abstract class ConfiguratedPriceCalculator extends PriceCalculator {
     protected pricingConfig?: PricingConfig;
     protected async loadAndSetPricingConfig(): Promise<PricingConfig> {
         const pricingConfig = await this.loadPricingConfig();
         this.pricingConfig = pricingConfig;
         return pricingConfig;
-    };
+    }
     public async loadPrice(): Promise<number> {
         if (this.pricingConfig) return this.calculatePriceWithPricingConfig(this.pricingConfig);
         const pricingConfig = await this.loadAndSetPricingConfig();

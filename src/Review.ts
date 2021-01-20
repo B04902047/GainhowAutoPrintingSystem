@@ -152,8 +152,8 @@ export class SingleSheetFrameDictionary extends FrameDictionary {
             SingleSheetFrameDictionary.CUT_ERROR,
         );
         return {
-            "正面": frame,
-            "背面": (this.product.getIsDoubleSided()) ? frame : undefined
+            "frontSide": frame,
+            "backSide": (this.product.getIsDoubleSided()) ? frame : undefined
         };
     }
     
@@ -162,7 +162,6 @@ export class SingleSheetFrameDictionary extends FrameDictionary {
 export class SaddleStichBindindBookFrameDictionary extends BookFrameDictionary {
     private static readonly INNER_PAGE_CUT_ERROR = 3;
     private static readonly COVER_CUT_ERROR = 3;
-    //TODO: 計算、定義騎馬釘書的內頁出血、安全距離
     constructor(
         readonly product: Product.SaddleStichBindingBook
     ) {
@@ -171,19 +170,20 @@ export class SaddleStichBindindBookFrameDictionary extends BookFrameDictionary {
     protected createBookCoverFrame(): SaddleStichBindindBookCoverFrame {
         return new SaddleStichBindindBookCoverFrame(
             this.product.coverWidth,
-            this.product.coverHieght,
+            this.product.coverHeight,
             SaddleStichBindindBookFrameDictionary.COVER_CUT_ERROR
         );
     }
     protected createInnerPageFramePrototype(): BleededRectangleFrame {
         return new BleededRectangleFrame(
             this.product.coverWidth,
-            this.product.coverHieght,
+            this.product.coverHeight,
             SaddleStichBindindBookFrameDictionary.INNER_PAGE_CUT_ERROR
         );
     }
 }
 class ButterflyBindingBookFrameDictionary extends BookFrameDictionary {
+
 }
 class PerfectBindingBookFrameDictionary extends BookFrameDictionary {
 }

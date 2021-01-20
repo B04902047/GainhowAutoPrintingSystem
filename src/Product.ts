@@ -7,15 +7,18 @@ export abstract class Product {
     protected abstract pricingCalculator: Pricing.PriceCalculator;
     protected abstract production: Production.Production;
     protected abstract frameDictionary: Review.FrameDictionary;
-    public getOrCreatePriceCalculator(): Pricing.PriceCalculator {
+    public loadPrice(): Promise<number> {
+        return this.getOrCreatePriceCalculator().loadPrice();
+    };
+    protected getOrCreatePriceCalculator(): Pricing.PriceCalculator {
         if(!this.pricingCalculator) this.createAndSetPriceCalculator();
         return this.pricingCalculator;
     }
-    public getOrCreateProduction(): Production.Production {
+    protected getOrCreateProduction(): Production.Production {
         if(!this.production) this.createAndSetProduction();
         return this.production;
     }
-    public getOrCreateFrameDictionary(): Review.FrameDictionary {
+    protected getOrCreateFrameDictionary(): Review.FrameDictionary {
         if(!this.frameDictionary) this.createAndSetFrameDictionary();
         return this.frameDictionary;
     }
@@ -33,7 +36,8 @@ export abstract class Product {
     protected abstract createFrameDictionary(): Review.FrameDictionary;
 }
 
-export class SingleSheet extends Product {    
+export class SingleSheet extends Product {
+    protected production: Production.SingleSheetProduction;    
     protected frameDictionary: Review.SingleSheetFrameDictionary;
     protected createProduction(): Production.Production {
         throw new Error("Method not implemented.");
@@ -52,7 +56,7 @@ export class SingleSheet extends Product {
         public width: number,
         public height: number,
         private isDoubleSided: boolean,
-        public paperTexture: PaperTexture,
+        public paperTexture: Paper,
         public frontSideCoat?: Coat,
         public backSideCoat?: Coat
     ) {
@@ -80,15 +84,17 @@ class Page {
 
 }
 
-export class PaperTexture {
+
+export class Paper {
     constructor(
         readonly material: PaperMaterial,
         readonly thickness: number,
+        readonly isSmooth: boolean, // 表面是否光滑（會影響能否上膜）
         readonly description: string
     ) {}
 }
 
-class PaperMaterial {
+export class PaperMaterial {
     constructor(
         readonly name: string,
         readonly aliases: Array<string>
@@ -102,51 +108,28 @@ enum CoatStyle {
     VELVET_LAMINATION = "絲絨膜"
 }
 
-abstract class Coat {
-    static readonly chineseName: string;
+export class Coat {
+    constructor (
+        readonly name: string,
+        readonly chineseName: string
+    ) {}
 }
-
-/**
- * 亮膜
- */
-class GlossLamination extends Coat {
-    static readonly chineseName = CoatStyle.GLOSS_LAMINATION;
-}
-
-/**
- * 霧膜 
- */
-class MattLamination extends Coat {
-    static readonly chineseName = CoatStyle.MATT_LAMINATION;
-}
-
-/**
- * 壓紋膜
- */
-class Embossing implements Coat {
-    static readonly chineseName = CoatStyle.EMBOSSING;
-}
-
-/**
- * 絲絨膜
- */
-class VelvetLamination implements Coat {
-    static readonly chineseName = CoatStyle.VELVET_LAMINATION;
-}
-
 
 export abstract class Book extends Product {
-    readonly cover : BookCover;
+    readonly cover: BookCover;
+    protected production: Production.BookProduction;
     protected innerPages : {
         [pageIndex: number]: Page
     } = {};
-    protected readonly bindingStyle: BindingStyle;
+    protected getBindingStyle(): Production.BookBindingStyle {
+        return (this.getOrCreateProduction() as Production.BookProduction).bindingStyle;
+    };
     constructor(
         public coverWidth: number,
-        public coverHieght: number,
+        public coverHeight: number,
         public numberOfPages: number,
-        public coverPaperTexture: PaperTexture,
-        public innerPagesPaperTexture: PaperTexture,
+        public coverPaperTexture: Paper,
+        public innerPagesPaperTexture: Paper,
         public coverCoating?: Coat,
         public innerPageCoating?: Coat,
         ) {
@@ -164,28 +147,6 @@ export abstract class Book extends Product {
     }
 }
 
-abstract class BindingStyle {
-}
-
-class ButterflyBinding extends BindingStyle {
-    
-}
-
-class PerfectBinding extends BindingStyle {
-    
-}
-
-class SaddleStichBinding extends BindingStyle {
-    private static instance: SaddleStichBinding = new SaddleStichBinding();
-    private constructor() {
-        super();
-    }
-    public static getInstance(): SaddleStichBinding {
-        return SaddleStichBinding.instance;
-    };
-}
-
-
 abstract class BookCover {
 
 }
@@ -195,21 +156,21 @@ class SaddleStichBindingBookCover extends BookCover {
 }
 
 export class SaddleStichBindingBook extends Book {
-    protected production: Production.Production;
-    
+
+    protected production: Production.SaddleStichBingingBookProduction;
     protected frameDictionary: Review.SaddleStichBindindBookFrameDictionary;
     constructor(
         coverWidth: number, 
-        coverHieght: number, 
+        coverHeight: number, 
         numberOfPages: number, 
-        coverPaperTexture: PaperTexture, 
-        innerPagesPaperTexture: PaperTexture, 
+        coverPaperTexture: Paper,
+        innerPagesPaperTexture: Paper, 
         coverCoating?: Coat, 
         innerPageCoating?: Coat
     ) {
         super(
             coverWidth, 
-            coverHieght, 
+            coverHeight, 
             numberOfPages, 
             coverPaperTexture, 
             innerPagesPaperTexture, 
@@ -218,62 +179,17 @@ export class SaddleStichBindingBook extends Book {
         );
     }
     
-   
     protected createProduction(): Production.SaddleStichBingingBookProduction {
         return new Production.SaddleStichBingingBookProduction(this);
     }
     protected createFrameDictionary(): Review.FrameDictionary {
-        return  new Review.SaddleStichBindindBookFrameDictionary(this);
+        return new Review.SaddleStichBindindBookFrameDictionary(this);
     }
     protected pricingCalculator: Pricing.SaddleStichBindingBookSingletonRequestConfiguratedPriceCalculator;
     public createPriceCalculator(): Pricing.SaddleStichBindingBookSingletonRequestConfiguratedPriceCalculator {
         return new Pricing.SaddleStichBindingBookSingletonRequestConfiguratedPriceCalculator(this);
     }
     
-    bindingStyle = SaddleStichBinding.getInstance();
+    bindingStyle = Production.SaddleStichBinding.getInstance();
     cover = new SaddleStichBindingBookCover();
-}
-
-
-interface ConcreteProductEncoding {
-    isConcrete: true;
-    concreteData: Object;
-}
-
-interface AbstractProductEncoding {
-    isConcrete: false;
-    subclassName: string;
-    subclassEncoding: ProductEncoding;
-}
-
-export type ProductEncoding = AbstractProductEncoding | ConcreteProductEncoding;
-
-export class ProductEncoder {
-    public static toJson(code: ProductEncoding): string {
-        return JSON.stringify(code);
-    }
-    public static fromJson(json: string): ProductEncoding | null {
-        let code: any;
-        try {
-            code = JSON.parse(json);
-        } catch {
-            return null;
-        }
-        if (ProductEncoder.isProductEncoding(code)) {
-            return code as ProductEncoding;
-        }
-        return null;
-    }
-    private static isProductEncoding(code: any): boolean {
-        if (code.isConcrete == true) {
-            if (code.concreteData == undefined) return false;
-            return true;
-        }
-        if (code.isConcrete == false) {
-            if (code.subclassName == undefined
-                || code.subclassEncoding == undefined) return false;
-            return ProductEncoder.isProductEncoding(code.subclassEncoding);
-        }
-        return false;
-    }
 }
