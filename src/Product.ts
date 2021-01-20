@@ -10,6 +10,16 @@ export abstract class Product {
     public loadPrice(): Promise<number> {
         return this.getOrCreatePriceCalculator().loadPrice();
     };
+    public getFrameDictionary(): Review.FrameDictionary {
+        return this.getOrCreateFrameDictionary();
+    }
+    public isProducible(): boolean {
+        let production: Production.Production = this.getOrCreateProduction();
+        return production.isProducible();
+    }
+    // TODO: 把production 要給人使用的method包裝成一個public的method
+    
+
     protected getOrCreatePriceCalculator(): Pricing.PriceCalculator {
         if(!this.pricingCalculator) this.createAndSetPriceCalculator();
         return this.pricingCalculator;

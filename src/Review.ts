@@ -23,12 +23,13 @@ interface Frame {
 
 export abstract class RectangleFrame implements Frame {
 
-    protected foldLines: Array<Line>;   // 有可能是0條，但不會是undefined
-    protected cutLines: Array<Line>;    // 有可能是0條，但不會是undefined
+    public readonly foldLines: Array<Line>;   // 有可能是0條，但不會是undefined
+    public readonly cutLines: Array<Line>;    // 有可能是0條，但不會是undefined
     constructor(
         protected width: number,
         protected height: number
     ) {
+        //super(width,height);
         this.foldLines = this.createFoldLines();
         this.cutLines = this.createCutLines();
     }
@@ -189,3 +190,130 @@ class PerfectBindingBookFrameDictionary extends BookFrameDictionary {
 
 export class ReviewRegistrationInfo {
 }
+
+
+class ReviewItem {
+    protected model: Map<string, ReviewedModel>;
+    constructor(
+        public readonly reviewId: string,
+        public readonly numberOfModels: number,
+        protected status: ReviewSatus,
+        protected readonly product: Product.Product
+    ) {
+        let frameDictionary: FrameDictionary = product.getFrameDictionary();
+        for (let modelIndex: number; modelIndex <= numberOfModels; modelIndex++) {
+            this.model[modelIndex] = new ReviewedModel(frameDictionary);
+        }
+    }
+}
+
+class ReviewedModel {
+    protected framePages: Map<string, FramedPage>
+    constructor(
+        protected readonly frameDictionary: FrameDictionary
+        // TODO: 收該款底下的每個框的FramedPage 而且是不一定要填的
+            // 這樣就可以儲存他們上次的編輯狀態了??
+       ) {
+        
+    }
+}
+
+class ReviewSatus {
+    constructor (
+        protected readonly product: Product.Product
+    ) {
+
+    }
+}
+
+class FramedPage {   
+    inputPagePreviewAddress: string;
+    printableResultionImageAddress: string;
+    printableResultionFileAddress: string;
+
+    constructor (
+        protected readonly frame: RectangleFrame,  //? RectangleFrame? Frame? 這個frame還沒有相關的public fun可以使用 像是得到折現之類的
+        protected positionX: number = 0,
+        protected positionY: number = 0,
+        protected scaleX: number = 1.0,
+        protected scaleY: number = 1.0,
+        protected rotationDegree: number = 0  
+
+    ) {
+       
+    }
+    public reset(): void {
+        this.rotation(0); //回到原本的角度
+        this.moveTo(0,0); // 回到原點
+        this.scale(1,1);  // 回到原本的縮放
+    }
+
+    // 旋轉
+    public rotation(degree: 0 | 90 | 180 | 270): void { //要在這裡限制? 還是說前端?
+        this.setRotationDegree(degree);
+    }
+
+    private setRotationDegree(degree: number) {
+        this.rotationDegree = degree;
+    }
+    // 縮放
+    public scale(x: number, y:number): void {
+        if(x > 0 && y > 0) {
+            this.setsScale(x,y);
+        }
+        else {
+            //TODO: 錯誤? 就默默不讓他做? 提醒? 還是0沒有關係?
+        }
+    }
+
+    private setsScale(x: number, y:number) {
+        this.scaleX = x;
+        this.scaleY = y;
+    }
+
+    // 移動位置
+    public moveTo(x: number, y:number): void {
+        // 檢查是否超出去，最多就是剛好超出去?防呆要在這裡嗎? 還是說寫前端的時候再防就好了
+        this.setPosition(x,y);
+    }
+
+    private setPosition(x?: number, y?:number) {
+        this.positionX = x;
+        this.positionY = y;
+    }
+    // 需要的method : setFile  getPreviewImage getResultImage getResultFlie
+    // cleanFile? 空白頁? 選擇了頁是不是可以改選擇用空白頁 
+}
+
+
+enum ReviewingProgress {
+    REGISTERED = 'Registered',
+    UPLOADING = 'Uploading',
+    GENERATING_PREVIEW_PAGES = 'GeneratingPreviewPages',
+    WAITING_PINTABLE_REVIEW = 'WaitingPintableReview',
+    GENERATING_PINTABLE_REVIEWED_PAGES = 'GeneratingPintableReviewedPages',
+    WAITING_FOR_USER_CHECK = 'WaitingForUserCheck',
+    FINISHED = 'Finished'
+}
+
+enum UploadFileProcessingStage {
+    UPLOAD = 'Upload',
+    GENERATING_PREVIEW_PAGES = 'GeneratingPreviewPages',
+    GENERATING_PINTABLE_PAGES = 'GeneratingPintablePages',
+}
+
+class UploadFile {
+    constructor (
+        readonly fileName: string,        
+        protected currentStage: UploadFileProcessingStage,
+        protected hasError: boolean = false,
+        protected numberOfPages?: number,
+        protected fileAddress?: string,
+        protected previewPagesAddress?: Array<string>,
+        protected printablePagesAddress?: Array<string>,
+        protected errorStage?: UploadFileProcessingStage
+    ) {
+
+    }
+}
+
