@@ -1,7 +1,7 @@
 import * as Product from "./Product"
 
 export abstract class FrameDictionary {
-    private frames: { [frameIndex: string]: Frame };
+    private frames: Map<string, Frame>;
     constructor(
         readonly product: Product.Product  
         ) {
@@ -14,20 +14,15 @@ export abstract class FrameDictionary {
         return this.frames[frameIndex];
     }
     
-    protected abstract createFrames(): { [frameIndex: string]: Frame };
+    protected abstract createFrames(): Map<string, Frame>;
 }
 
-interface Frame {
-
-}
-
-export abstract class RectangleFrame implements Frame {
-
+abstract class Frame {
     public readonly foldLines: Array<Line>;   // 有可能是0條，但不會是undefined
     public readonly cutLines: Array<Line>;    // 有可能是0條，但不會是undefined
     constructor(
-        protected width: number,
-        protected height: number
+        protected maxWidth: number,
+        protected maxHeight: number
     ) {
         //super(width,height);
         this.foldLines = this.createFoldLines();
@@ -38,6 +33,7 @@ export abstract class RectangleFrame implements Frame {
     protected abstract createCutLines(): Array<Line>;
 }
 
+
 class Line {
     constructor(
         readonly startX: number,
@@ -47,6 +43,14 @@ class Line {
     ) {}
 }
 
+export abstract class RectangleFrame extends Frame {
+    constructor(
+        protected width: number,
+        protected height: number
+    ) {
+        super(width, height);
+    }
+}
 
 class BleededRectangleFrame extends RectangleFrame {
     protected createFoldLines(): Line[] {
@@ -55,19 +59,19 @@ class BleededRectangleFrame extends RectangleFrame {
     protected createCutLines(): Line[] {
         let leftCutLine: Line = new Line(
             this.cutError, 0,
-            this.cutError, this.height
+            this.cutError, this.maxHeight
         );
         let rightCutLine: Line = new Line(
-            this.width - this.cutError, 0,
-            this.width - this.cutError, this.height
+            this.maxWidth - this.cutError, 0,
+            this.maxWidth - this.cutError, this.maxHeight
         );
         let topCutLine: Line = new Line(
             0, this.cutError,
-            this.width, this.cutError
+            this.maxWidth, this.cutError
         );
         let bottomCutLine: Line = new Line(
-            0, this.height - this.cutError,
-            this.width, this.height - this.cutError
+            0, this.maxHeight - this.cutError,
+            this.maxWidth, this.maxHeight - this.cutError
         );
         return [
             leftCutLine,
@@ -106,7 +110,7 @@ abstract class BookCoverFrame extends BleededRectangleFrame {
 }
 abstract class BookFrameDictionary extends FrameDictionary {
     protected coverFrame: BookCoverFrame;
-    protected innerPageFrames: { [pageIndex: string]: BleededRectangleFrame };
+    protected innerPageFrames: { [pageIndex: string]: Frame };
     
     constructor(product: Product.Book)   {
         super(product);
@@ -117,8 +121,8 @@ abstract class BookFrameDictionary extends FrameDictionary {
             this.innerPageFrames[i] = innerFramePrototype;
         }
     }
-    protected createFrames(): { [frameIndex: string]: RectangleFrame } {
-        let frames: { [frameIndex: string]: RectangleFrame };
+    protected createFrames(): Map<string, RectangleFrame> {
+        let frames = new Map<string, RectangleFrame>();
         frames['cover'] = this.coverFrame;
         frames = Object.assign(frames, this.innerPageFrames);
         return frames;
@@ -130,10 +134,10 @@ abstract class BookFrameDictionary extends FrameDictionary {
 
 class SaddleStichBindindBookCoverFrame extends BookCoverFrame {
     protected createFoldLines(): Line[] {
-        let middle: number = this.width / 2;
+        let middle: number = this.maxWidth / 2;
         let middleLine: Line = new Line(
             middle, 0,
-            middle, this.height
+            middle, this.maxHeight
         )
         return [middleLine];
     }
@@ -145,16 +149,18 @@ export class SingleSheetFrameDictionary extends FrameDictionary {
         super(product);
     }
     private static readonly CUT_ERROR = 2;
-    protected createFrames(): { [frameIndex: string]: RectangleFrame; } {
+    protected createFrames(): Map<string, RectangleFrame> {
         let frame = new BleededRectangleFrame (
             this.product.width,
             this.product.height,
             SingleSheetFrameDictionary.CUT_ERROR,
         );
-        return {
-            "frontSide": frame,
-            "backSide": (this.product.getIsDoubleSided()) ? frame : undefined
-        };
+        let frames = new Map<string, RectangleFrame>();
+        frames.set("frontSide", frame);
+        if (this.product.getIsDoubleSided()) {
+            frames.set("backSide", frame);
+        }
+        return frames;
     }
     
 
@@ -193,7 +199,7 @@ export class ReviewRegistrationInfo {
 
 
 class ReviewItem {
-    protected model: Map<string, ReviewedModel>;
+    protected models: Map<string, ReviewedModel>;
     constructor(
         public readonly reviewId: string,
         public readonly numberOfModels: number,
@@ -201,8 +207,12 @@ class ReviewItem {
         protected readonly product: Product.Product
     ) {
         let frameDictionary: FrameDictionary = product.getFrameDictionary();
-        for (let modelIndex: number; modelIndex <= numberOfModels; modelIndex++) {
-            this.model[modelIndex] = new ReviewedModel(frameDictionary);
+        this.models = new Map<string, ReviewedModel>();
+        for (let modelIndex: number = 1; modelIndex <= numberOfModels; modelIndex++) {
+            this.models.set(
+                String(modelIndex),
+                new ReviewedModel(frameDictionary)
+            );
         }
     }
 }
@@ -228,28 +238,25 @@ class ReviewSatus {
 
 class FramedPage {   
     inputPagePreviewAddress: string;
-    printableResultionImageAddress: string;
-    printableResultionFileAddress: string;
+    printableResultingImageAddress?: string;
+    printableResultingFileAddress?: string;
 
     constructor (
         protected readonly frame: RectangleFrame,  //? RectangleFrame? Frame? 這個frame還沒有相關的public fun可以使用 像是得到折現之類的
         protected positionX: number = 0,
         protected positionY: number = 0,
-        protected scaleX: number = 1.0,
-        protected scaleY: number = 1.0,
-        protected rotationDegree: number = 0  
-
-    ) {
-       
-    }
+        protected scaleX: number = 1,
+        protected scaleY: number = 1,
+        protected rotationDegree: number = 0
+    ) {}
     public reset(): void {
-        this.rotation(0); //回到原本的角度
-        this.moveTo(0,0); // 回到原點
-        this.scale(1,1);  // 回到原本的縮放
+        this.rotate(0);   // 回到原本的角度
+        this.moveTo(0, 0);  // 回到原點
+        this.scale(1, 1);   // 回到原本的縮放
     }
 
     // 旋轉
-    public rotation(degree: 0 | 90 | 180 | 270): void { //要在這裡限制? 還是說前端?
+    public rotate(degree: number): void {
         this.setRotationDegree(degree);
     }
 
@@ -257,27 +264,27 @@ class FramedPage {
         this.rotationDegree = degree;
     }
     // 縮放
-    public scale(x: number, y:number): void {
+    public scale(x: number, y: number): void {
         if(x > 0 && y > 0) {
-            this.setsScale(x,y);
+            this.setScale(x, y);
         }
         else {
             //TODO: 錯誤? 就默默不讓他做? 提醒? 還是0沒有關係?
         }
     }
 
-    private setsScale(x: number, y:number) {
+    private setScale(x: number, y:number) {
         this.scaleX = x;
         this.scaleY = y;
     }
 
     // 移動位置
-    public moveTo(x: number, y:number): void {
+    public moveTo(x: number, y: number): void {
         // 檢查是否超出去，最多就是剛好超出去?防呆要在這裡嗎? 還是說寫前端的時候再防就好了
         this.setPosition(x,y);
     }
 
-    private setPosition(x?: number, y?:number) {
+    private setPosition(x: number, y: number) {
         this.positionX = x;
         this.positionY = y;
     }
@@ -287,19 +294,20 @@ class FramedPage {
 
 
 enum ReviewingProgress {
-    REGISTERED = 'Registered',
-    UPLOADING = 'Uploading',
-    GENERATING_PREVIEW_PAGES = 'GeneratingPreviewPages',
-    WAITING_PINTABLE_REVIEW = 'WaitingPintableReview',
-    GENERATING_PINTABLE_REVIEWED_PAGES = 'GeneratingPintableReviewedPages',
-    WAITING_FOR_USER_CHECK = 'WaitingForUserCheck',
-    FINISHED = 'Finished'
+    REGISTERED = '已登記審稿，但還沒開始上傳檔案',
+    UPLOADING = '已經開始上傳檔案，但還有檔案沒上傳完畢',
+    GENERATING_PREVIEW_PAGES = '所有檔案都上傳完畢，但還有檔案預覽圖在生成中',
+    WAITING_PRINTABLE_REVIEW = '預覽圖都生成完畢，但使用者還在確認排版',
+    GENERATING_PRINTABLE_REVIEWED_PAGES = '使用者已確認排版，但還有印刷檔在生成中',
+    WAITING_FOR_USER_CHECK = '印刷檔都生成完畢，但使用者還沒確認最終結果',
+    FINISHED = '使用者審稿完畢'
 }
 
 enum UploadFileProcessingStage {
-    UPLOAD = 'Upload',
-    GENERATING_PREVIEW_PAGES = 'GeneratingPreviewPages',
-    GENERATING_PINTABLE_PAGES = 'GeneratingPintablePages',
+    UPLOAD = '已登記上傳檔案，但檔案還沒上傳完',
+    GENERATING_PREVIEW_PAGES = '已收到上傳檔，但正在生成預覽圖',
+    GENERATING_PRINTABLE_PAGES = '已生成預覽圖，但PDF還沒好',
+    FINISHED = '處理完畢'
 }
 
 class UploadFile {
