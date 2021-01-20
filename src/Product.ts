@@ -101,13 +101,6 @@ export class PaperMaterial {
     ) {}
 }
 
-enum CoatStyle {
-    GLOSS_LAMINATION = "亮膜",
-    MATT_LAMINATION = "霧膜",
-    EMBOSSING = "壓紋膜",
-    VELVET_LAMINATION = "絲絨膜"
-}
-
 export class Coat {
     constructor (
         readonly name: string,

@@ -1,6 +1,5 @@
 import * as Product from "./Product"
 
-
 export abstract class FrameDictionary {
     private frames: { [frameIndex: string]: Frame };
     constructor(

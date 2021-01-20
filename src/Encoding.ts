@@ -77,7 +77,7 @@ class ProductEncoding extends AbstractClassEncoding {
             subclassEncoding
         };
     }
-    public static decode(encoding: ProductEncoding): Product.Product | null {
+    public static decode(encoding: ProductEncoding): Product.Product {
         switch (encoding.subclassName) {
             case ProductSubclassName.BOOK:
                 return BookEncoding.decode(encoding.subclassEncoding as BookEncoding);
