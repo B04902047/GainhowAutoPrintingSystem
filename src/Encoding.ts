@@ -1,4 +1,5 @@
 import * as Product from "./Product";
+import * as Review from "./Review";
 
 abstract class ClassEncoding {
     constructor(
@@ -378,5 +379,187 @@ class SingleSheetEncoding extends ConcreteClassEncoding {
             encoding.frontSideCoat,
             encoding.backSideCoat
         );
+    }
+}
+
+
+
+export class ReviewItemEncoding extends ClassEncoding {
+    constructor(
+        readonly reviewId: string, 
+        readonly numberOfModels: number, 
+        readonly reviewSatusEncoding: ReviewSatusEncoding,
+        readonly productEncoding: ProductEncoding,
+        readonly reviewModelEncodings?: Map<string, ReviewedModelEncoding>
+    ) {
+        super('ReviewItem',false);
+    }
+    public static decode(text: string) :Review.ReviewItem  | null { 
+        let code = this.fromJson(text);
+        if (this.is(code)) {
+            return ReviewItemEncoding.toInstance(code);
+        }
+        return null;
+    }
+
+    public static toInstance(encoding: ReviewItemEncoding): Review.ReviewItem | null {
+        let reviewId: string = encoding.reviewId;
+        let numberOfModels: number = encoding.numberOfModels; 
+        let product: Product.Product | null = ProductEncoding.toInstance(encoding.productEncoding);
+        let reviewSatus: Review.ReviewSatus | null = ReviewSatusEncoding.toInstance(encoding.reviewSatusEncoding);
+        
+        let modals : Map<string, Review.ReviewedModel> | undefined;
+        
+        //TODO : 拿 reviewModelEncodings 給 reviewModelEncoding.toInstance ，對應得到 Map<string, reviewModel>
+        if (encoding.reviewModelEncodings) {
+            modals = new Map<string, Review.ReviewedModel>();
+            let modalsHasError: boolean = false;            
+            (encoding.reviewModelEncodings).forEach((encoding,index) => {
+                let modal = ReviewedModelEncoding.toInstance(encoding);
+                if (modal && modals) modals.set(index, modal);
+                else modalsHasError = true;
+            });
+            if (modals.size !== numberOfModels) modalsHasError = true;
+            if (modalsHasError) return null;
+        }
+        
+        //檢查 product 和 reviewSatus 是不是失敗 如果失敗的話就創不出ReviewItem ，會回傳null
+        if (!product || !reviewSatus ) {
+            return null;  //改成throw error
+        } else {
+            return new Review.ReviewItem(
+                reviewId,
+                numberOfModels,
+                reviewSatus,
+                product,
+                modals
+            );
+        }
+        
+       
+    }
+    public static is(code: any): code is ReviewItemEncoding { 
+        if (typeof code.reviewId !== 'string') return false;
+        if (typeof code.numberOfModels !== 'number') return false;
+        if (!ReviewSatusEncoding.is(code.ReviewSatus)) return false;
+        if (!ProductEncoding.is(code.product)) return false;
+        if (code.reviewedModelEncodings && !Array.isArray(code.reviewedModelEncodings)) return false;
+        
+        if (code.reviewedModelEncodings) {
+            let isReviewedModelEncodings = true;
+            code.reviewedModelEncodings.forEach((element: any) => {
+                if (!ReviewedModelEncoding.is(element)) isReviewedModelEncodings =false;
+            });
+            if (!isReviewedModelEncodings) return false;
+        }
+        return true;
+    }
+
+}
+
+
+class ReviewSatusEncoding extends ClassEncoding {
+    constructor(
+        protected uploadFileEncodings: Array<UploadFileEncoding>,
+        protected progress: Review.ReviewingProgress
+    ) {
+        super('ReviewSatus',false);
+    }
+
+    toInstance(encoding: ReviewSatusEncoding): Review.ReviewSatus | null {
+        let uploadFiles = [];
+        let uploadFileEncodings = encoding.uploadFileEncodings;
+        let lengthOfUploadFile: number = uploadFileEncodings.length;
+        for (let i=0; i<lengthOfUploadFile; i++) {
+           let uploadFile = UploadFileEncoding.toInstance(uploadFileEncodings[i]);
+        if (uploadFile) uploadFiles.push(uploadFile);
+        }
+
+        if (uploadFiles.length === uploadFileEncodings.length) {
+            return new Review.ReviewSatus(
+                uploadFiles,
+                this.progress  
+            )
+        } else {
+            return null;
+        }
+    }
+
+    public static is(code: any): code is ReviewSatusEncoding { 
+        if (!Object.values(Review.ReviewingProgress).includes(code.progress)) return false;
+        if (!code.uploadFileEncodings) return false;
+        let isUploadFileEncodings = true;
+        code.uploadFileEncodings.forEach((element: any)=> {
+            if (!UploadFileEncoding.is(element)) isUploadFileEncodings = false;
+        });
+        if (!isUploadFileEncodings) return false;
+
+        return true;
+    }
+}
+class UploadFileEncoding extends ClassEncoding {
+    constructor(
+        readonly fileName: string,        
+        protected currentStage: Review.UploadFileProcessingStage,
+        protected hasError: boolean = false,
+        protected numberOfPages?: number,
+        protected fileAddress?: string,
+        protected previewPagesAddress?: Array<string>,
+        protected printablePagesAddress?: Array<string>,
+        protected errorStage?: Review.UploadFileProcessingStage
+    ) 
+    {
+        super('UploadFile',false);
+    }
+
+    public static toInstance(encoding: UploadFileEncoding): Review.UploadFile | null{
+      return new Review.UploadFile (
+        encoding.fileName,        
+        encoding.currentStage,
+        encoding.hasError,
+        encoding.numberOfPages,
+        encoding.fileAddress,
+        encoding.previewPagesAddress,
+        encoding.printablePagesAddress,
+        encoding.errorStage
+      );
+
+    }
+    public static is(code: any): code is UploadFileEncoding { 
+        if (typeof code.className !== 'string') return false;
+        if (typeof code.hasError !== 'boolean') return false;
+        if (code.numberOfPages && typeof code.numberOfPages !== 'number') return false;
+        if (code.fileAddress && typeof code.fileAddress !== 'string') return false;
+        
+        if (!Array.isArray(code.previewPagesAddress)) return false;
+        for (const Address of code.previewPagesAddress) {
+            if (typeof Address !== "string") return false;
+        }
+
+        if (!Array.isArray(code.printablePagesAddress)) return false;
+        for (const Address of code.printablePagesAddress) {
+            if (typeof Address !== "string") return false;
+        }
+
+        if (!Object.values(Review.UploadFileProcessingStage).includes(code.currentStage)) return false;
+        if (code.errorStage && !Object.values(Review.UploadFileProcessingStage).includes(code.errorStage)) return false;
+
+        return true;
+    }
+}
+
+class ReviewedModelEncoding extends ClassEncoding {
+    constructor(
+        
+    ) {
+        super('ReviewModel',false);
+    }
+
+    public static toInstance(encoding: ReviewedModelEncoding): Review.ReviewedModel | null {
+       
+    }
+
+    public static is(code: any): code is ReviewedModelEncoding { 
+        
     }
 }

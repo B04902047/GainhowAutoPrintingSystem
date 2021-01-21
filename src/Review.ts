@@ -198,41 +198,49 @@ export class ReviewRegistrationInfo {
 }
 
 
-class ReviewItem {
-    protected models: Map<string, ReviewedModel>;
+export class ReviewItem {
     constructor(
         public readonly reviewId: string,
         public readonly numberOfModels: number,
         protected status: ReviewSatus,
-        protected readonly product: Product.Product
+        protected readonly product: Product.Product,
+        protected models ?: Map<string, ReviewedModel>
     ) {
-        let frameDictionary: FrameDictionary = product.getFrameDictionary();
-        this.models = new Map<string, ReviewedModel>();
-        for (let modelIndex: number = 1; modelIndex <= numberOfModels; modelIndex++) {
-            this.models.set(
-                String(modelIndex),
-                new ReviewedModel(frameDictionary)
-            );
+        if (!this.models) { // 創建的時候，如果沒有塞進來的話就創新的，有的話他就有
+            this.models = new Map<string, ReviewedModel>();
+            for (let modelIndex: number = 1; modelIndex <= numberOfModels; modelIndex++) {
+                this.models.set(
+                    String(modelIndex),
+                    new ReviewedModel(modelIndex, this)
+                );
+            }
         }
-    }
-}
-
-class ReviewedModel {
-    protected framePages: Map<string, FramedPage>
-    constructor(
-        protected readonly frameDictionary: FrameDictionary
-        // TODO: 收該款底下的每個框的FramedPage 而且是不一定要填的
-            // 這樣就可以儲存他們上次的編輯狀態了??
-       ) {
         
     }
+
+    public getFrame(index: string): Frame | undefined {
+        let frameDictionary: FrameDictionary = this.product.getFrameDictionary();
+        return frameDictionary.getFrame(index);
+    }
 }
 
-class ReviewSatus {
-    constructor (
-        protected readonly product: Product.Product
-    ) {
+export class ReviewedModel {    
+    constructor(
+        public readonly modelIndex: number,
+        public readonly reviewItem: ReviewItem
+       ) {
+    }
+    public getFrame(index: string): Frame | undefined {
+        return this.reviewItem.getFrame(index);
+    }
+}
 
+export class ReviewSatus {
+    constructor (
+        protected uploadFiles: Array<UploadFile>,
+        protected progress: ReviewingProgress
+    ) {
+        
     }
 }
 
@@ -242,13 +250,19 @@ class FramedPage {
     printableResultingFileAddress?: string;
 
     constructor (
-        protected readonly frame: RectangleFrame,  //? RectangleFrame? Frame? 這個frame還沒有相關的public fun可以使用 像是得到折現之類的
+        public readonly pageIndex: string,
+        public readonly reviewModel: ReviewedModel,  
         protected positionX: number = 0,
         protected positionY: number = 0,
         protected scaleX: number = 1,
         protected scaleY: number = 1,
         protected rotationDegree: number = 0
     ) {}
+
+    public getFrame(): Frame | undefined {
+      return this.reviewModel.getFrame(this.pageIndex);
+    }
+
     public reset(): void {
         this.rotate(0);   // 回到原本的角度
         this.moveTo(0, 0);  // 回到原點
@@ -293,7 +307,7 @@ class FramedPage {
 }
 
 
-enum ReviewingProgress {
+export enum ReviewingProgress {
     REGISTERED = '已登記審稿，但還沒開始上傳檔案',
     UPLOADING = '已經開始上傳檔案，但還有檔案沒上傳完畢',
     GENERATING_PREVIEW_PAGES = '所有檔案都上傳完畢，但還有檔案預覽圖在生成中',
@@ -303,14 +317,14 @@ enum ReviewingProgress {
     FINISHED = '使用者審稿完畢'
 }
 
-enum UploadFileProcessingStage {
+export enum UploadFileProcessingStage {
     UPLOAD = '已登記上傳檔案，但檔案還沒上傳完',
     GENERATING_PREVIEW_PAGES = '已收到上傳檔，但正在生成預覽圖',
     GENERATING_PRINTABLE_PAGES = '已生成預覽圖，但PDF還沒好',
     FINISHED = '處理完畢'
 }
 
-class UploadFile {
+export class UploadFile {
     constructor (
         readonly fileName: string,        
         protected currentStage: UploadFileProcessingStage,
