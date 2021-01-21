@@ -1,5 +1,6 @@
 import * as Product from "./Product";
 import * as Review from "./Review";
+import { FailureType, TransactionError } from "./Transaction";
 
 abstract class ClassEncoding {
     constructor(
@@ -59,7 +60,7 @@ enum ProductSubclassName {
 
 type ProductSubclassEncoding = BookEncoding | SingleSheetEncoding;
 
-class ProductEncoding extends AbstractClassEncoding {
+export class ProductEncoding extends AbstractClassEncoding {
     constructor(
         readonly subclassName: ProductSubclassName,
         readonly subclassEncoding: ProductSubclassEncoding
@@ -77,19 +78,25 @@ class ProductEncoding extends AbstractClassEncoding {
     public static is(code: any): code is ProductEncoding {
         if (code.isAbstract !== true) return false;
         if (code.className !== "Product") return false;
+        let subclassEncoding = code.subclassEncoding;
         switch (code.subclassName) {
             case ProductSubclassName.BOOK:
-                return BookEncoding.is(code.subclassEncoding);
+                return BookEncoding.is(subclassEncoding);
             case ProductSubclassName.SINGLE_SHEET:
-                return SingleSheetEncoding.is(code.subclassEncoding);
+                return SingleSheetEncoding.is(subclassEncoding);
             default:
                 return false;
         }
+        
     }
     public static decode(json: string): Product.Product | null {
-        let productEncoding: any | null = this.fromJson(json);
-        if (productEncoding === null) return null;
-        return this.toInstance(productEncoding);        
+        let object: any | null = this.fromJson(json);
+        if (!this.is(object)) return null;
+        return this.toInstance(object);
+    }
+    public static encode(product: Product.Product): string {
+        let productEncoding = this.fromInstance(product);
+        return this.toJson(productEncoding);
     }
     public static fromSubclassEncoding(subclassEncoding: ProductSubclassEncoding): ProductEncoding {
         return new ProductEncoding(
@@ -97,8 +104,18 @@ class ProductEncoding extends AbstractClassEncoding {
             subclassEncoding
         );
     }
-    public static toInstance(encoding: ProductEncoding): Product.Product | null {
-        if (!this.is(encoding)) return null;
+    public static fromInstance(product: Product.Product): ProductEncoding {
+        if (BookEncoding.isInstance(product)) return BookEncoding.fromInstance(product);
+        if (SingleSheetEncoding.isInstance(product)) return SingleSheetEncoding.fromInstance(product);
+        // TODO: throw exception: 試圖encode還沒有跟我們登記的東西
+        throw new TransactionError(FailureType.PRECONDITION_FAILURE, "試圖encode還沒有跟我們登記encode的product");
+    }
+    public static isInstance(object: any): object is Product.Product {
+        return (BookEncoding.isInstance(object)
+            || SingleSheetEncoding.isInstance(object)
+            );
+    }
+    public static toInstance(encoding: ProductEncoding): Product.Product {
         switch (encoding.subclassName) {
             case ProductSubclassName.BOOK:
                 return BookEncoding.toInstance(encoding.subclassEncoding as BookEncoding);
@@ -121,52 +138,60 @@ type BookSubclassEncoding
 
 class BookEncoding extends AbstractClassEncoding {
     readonly className: ProductSubclassName = ProductSubclassName.BOOK;
+    readonly subclassName: BookSubclassName;
     constructor (
-        readonly subclassName: BookSubclassName,
         readonly subclassEncoding: BookSubclassEncoding
     ) {
         super(
             ProductSubclassName.BOOK,
-            subclassName,
+            subclassEncoding.className,
             subclassEncoding
-        )
+        );
+        this.subclassName = subclassEncoding.className;
     }
+
     public static is(code: any): code is BookEncoding {
         if (code.className !== ProductSubclassName.BOOK) return false;
         switch (code.subclassName) {
             case BookSubclassName.BUTTERFLY_BINDING_BOOK:
+                return ButterflyBindingBookEncoding.is(code.subclassEncoding);
             case BookSubclassName.PERFECT_BINDING_BOOK:
+                return PerfectBindingBookEncoding.is(code.subclassEncoding);
             case BookSubclassName.SADDLE_STICH_BINDING_BOOK:
-                break;
-            default: return false;
+                return SaddleStichBindingBookEncoding.is(code.subclassEncoding);
+            default:
+                return false;
         }
-        if (!AbstractClassEncoding.is(code)) return false;
-        return true;
     }
-    public static toInstance(encoding: BookEncoding): Product.Book | null {
+    public static isInstance(object: any): object is Product.Book {
+        return (Object.values(BookSubclassName).includes(object.constructor.name));
+    }
+    public static toInstance(encoding: BookEncoding): Product.Book {
         let subclassEncoding: BookSubclassEncoding = encoding.subclassEncoding;
         switch (encoding.subclassName) {
             case BookSubclassName.SADDLE_STICH_BINDING_BOOK:
-                if (SaddleStichBindingBookEncoding.is(subclassEncoding)) {
-                    return SaddleStichBindingBookEncoding.toInstance(subclassEncoding);
-                }
+                return SaddleStichBindingBookEncoding.toInstance(subclassEncoding as SaddleStichBindingBookEncoding);
             case BookSubclassName.PERFECT_BINDING_BOOK:
-                if (PerfectBindingBookEncoding.is(subclassEncoding)) {
-                    return PerfectBindingBookEncoding.toInstance(subclassEncoding);
-                }
+                return PerfectBindingBookEncoding.toInstance(subclassEncoding as PerfectBindingBookEncoding);
             case BookSubclassName.BUTTERFLY_BINDING_BOOK:
-                if (ButterflyBindingBookEncoding.is(subclassEncoding)) {
-                    return ButterflyBindingBookEncoding.toInstance(subclassEncoding as ButterflyBindingBookEncoding);    
-                }
-            }
-        return null;
+                return ButterflyBindingBookEncoding.toInstance(subclassEncoding as ButterflyBindingBookEncoding);    
+        }
     }
     public static fromSubclassEncoding(subclassEncoding: BookSubclassEncoding): ProductEncoding {
         let bookEncoding = new BookEncoding(
-            subclassEncoding.className,
             subclassEncoding
         );
         return ProductEncoding.fromSubclassEncoding(bookEncoding);
+    }
+    public static fromInstance(book: Product.Book): ProductEncoding {
+        switch (book.constructor.name as BookSubclassName) {
+            case BookSubclassName.SADDLE_STICH_BINDING_BOOK:
+                return SaddleStichBindingBookEncoding.fromInstance(book as Product.SaddleStichBindingBook);
+            case BookSubclassName.PERFECT_BINDING_BOOK:
+                return PerfectBindingBookEncoding.fromInstance(book as Product.PerfectBindingBook);
+            case BookSubclassName.BUTTERFLY_BINDING_BOOK:
+                return ButterflyBindingBookEncoding.fromInstance(book as Product.ButterflyBindingBook);    
+        }
     }
 }
 
@@ -203,7 +228,7 @@ class SaddleStichBindingBookEncoding extends ConcreteClassEncoding {
         let encoding: ProductEncoding = this.fromInstance(saddleStichBindingBook);
         return this.toJson(encoding);
     }
-    public static toInstance(encoding: SaddleStichBindingBookEncoding): Product.SaddleStichBindingBook | null {
+    public static toInstance(encoding: SaddleStichBindingBookEncoding): Product.SaddleStichBindingBook {
         return new Product.SaddleStichBindingBook(
             encoding.coverWidth,
             encoding.coverHeight, 
@@ -335,7 +360,7 @@ class SingleSheetEncoding extends ConcreteClassEncoding {
         public frontSideCoat?: CoatEncoding,
         public backSideCoat?: CoatEncoding
     ) {
-        super("SingleSheet");
+        super(ProductSubclassName.SINGLE_SHEET);
     }
 
     public static encode(singleSheet: Product.SingleSheet): string {
@@ -355,6 +380,9 @@ class SingleSheetEncoding extends ConcreteClassEncoding {
         ) return false;
         return true;
     }
+    public static isInstance(object: any): object is Product.SingleSheet {
+        return (object.constructor.name === ProductSubclassName.SINGLE_SHEET);
+    } 
     public static fromInstance(product: Product.SingleSheet): ProductEncoding {
         let frontSideCoatEncoding: CoatEncoding | undefined;
         let backSideCoatEncoding: CoatEncoding | undefined;
@@ -383,21 +411,20 @@ class SingleSheetEncoding extends ConcreteClassEncoding {
 }
 
 
-
-export class ReviewItemEncoding extends ClassEncoding {
+export class ReviewItemEncoding extends ConcreteClassEncoding {
     constructor(
         readonly reviewId: string, 
         readonly numberOfModels: number, 
-        readonly reviewSatusEncoding: ReviewSatusEncoding,
+        readonly reviewSatusEncoding: ReviewStatusEncoding,
         readonly productEncoding: ProductEncoding,
-        readonly reviewModelEncodings?: Map<string, ReviewedModelEncoding>
+        readonly reviewModelEncodings: Map<number, ReviewModelEncoding>
     ) {
-        super('ReviewItem',false);
+        super('ReviewItem');
     }
-    public static decode(text: string) :Review.ReviewItem  | null { 
+    public static decode(text: string): Review.ReviewItem | null { 
         let code = this.fromJson(text);
         if (this.is(code)) {
-            return ReviewItemEncoding.toInstance(code);
+            return this.toInstance(code);
         }
         return null;
     }
@@ -405,78 +432,81 @@ export class ReviewItemEncoding extends ClassEncoding {
     public static toInstance(encoding: ReviewItemEncoding): Review.ReviewItem | null {
         let reviewId: string = encoding.reviewId;
         let numberOfModels: number = encoding.numberOfModels; 
-        let product: Product.Product | null = ProductEncoding.toInstance(encoding.productEncoding);
-        let reviewSatus: Review.ReviewSatus | null = ReviewSatusEncoding.toInstance(encoding.reviewSatusEncoding);
+        let reviewStatus: Review.ReviewStatus = ReviewStatusEncoding.toInstance(encoding.reviewSatusEncoding);
+        let product: Product.Product = ProductEncoding.toInstance(encoding.productEncoding);
+
+        let reviewItem = new Review.ReviewItem(
+            reviewId,
+            numberOfModels,
+            reviewStatus,
+            product
+        );
         
-        let modals : Map<string, Review.ReviewedModel> | undefined;
+        let models = new Map<number, Review.ReviewModel>();
         
-        //TODO : 拿 reviewModelEncodings 給 reviewModelEncoding.toInstance ，對應得到 Map<string, reviewModel>
-        if (encoding.reviewModelEncodings) {
-            modals = new Map<string, Review.ReviewedModel>();
-            let modalsHasError: boolean = false;            
-            (encoding.reviewModelEncodings).forEach((encoding,index) => {
-                let modal = ReviewedModelEncoding.toInstance(encoding);
-                if (modal && modals) modals.set(index, modal);
-                else modalsHasError = true;
-            });
-            if (modals.size !== numberOfModels) modalsHasError = true;
-            if (modalsHasError) return null;
-        }
+        //TODO : 拿 reviewModelEncodings 給 reviewModelEncoding.toInstance ，對應得到 Map<string, reviewModel>           
+        (encoding.reviewModelEncodings).forEach((encoding, index) => {
+            let model = ReviewModelEncoding.toInstance(encoding, reviewItem);
+            models.set(index, model);
+        });
         
-        //檢查 product 和 reviewSatus 是不是失敗 如果失敗的話就創不出ReviewItem ，會回傳null
-        if (!product || !reviewSatus ) {
-            return null;  //改成throw error
-        } else {
-            return new Review.ReviewItem(
-                reviewId,
-                numberOfModels,
-                reviewSatus,
-                product,
-                modals
+        reviewItem.setModels(models);   // TODO: throw an exception
+        
+        return reviewItem;
+    }
+    public static fromInstance(reviewItem: Review.ReviewItem): ReviewItemEncoding {
+        let reviewModels = reviewItem.getModels();
+        let reviewModelEncodings = new Map<number, ReviewModelEncoding>();
+        reviewModels.forEach((model, modelIndex) => {
+            reviewModelEncodings.set(
+                modelIndex,
+                ReviewModelEncoding.fromInstance(model)
             );
-        }
-        
-       
+        })
+        return new ReviewItemEncoding(
+            reviewItem.reviewId,
+            reviewItem.numberOfModels,
+            ReviewStatusEncoding.fromInstance(reviewItem.status),
+            ProductEncoding.fromInstance(reviewItem.product),
+            reviewModelEncodings
+        );
     }
     public static is(code: any): code is ReviewItemEncoding { 
         if (typeof code.reviewId !== 'string') return false;
         if (typeof code.numberOfModels !== 'number') return false;
-        if (!ReviewSatusEncoding.is(code.ReviewSatus)) return false;
+        if (!ReviewStatusEncoding.is(code.ReviewSatus)) return false;
         if (!ProductEncoding.is(code.product)) return false;
-        if (code.reviewedModelEncodings && !Array.isArray(code.reviewedModelEncodings)) return false;
+        if (!Array.isArray(code.reviewedModelEncodings)) return false;
         
-        if (code.reviewedModelEncodings) {
-            let isReviewedModelEncodings = true;
-            code.reviewedModelEncodings.forEach((element: any) => {
-                if (!ReviewedModelEncoding.is(element)) isReviewedModelEncodings =false;
-            });
-            if (!isReviewedModelEncodings) return false;
-        }
+        let isReviewedModelEncodings = true;
+        code.reviewedModelEncodings.forEach((element: any) => {
+            if (!ReviewModelEncoding.is(element)) isReviewedModelEncodings = false;
+        });
+        if (!isReviewedModelEncodings) return false;
         return true;
     }
-
 }
 
 
-class ReviewSatusEncoding extends ClassEncoding {
+class ReviewStatusEncoding extends ClassEncoding {
     constructor(
-        protected uploadFileEncodings: Array<UploadFileEncoding>,
+        protected uploadFileEncodings: Array<UploadFileStatusEncoding>,
         protected progress: Review.ReviewingProgress
     ) {
         super('ReviewSatus',false);
     }
 
-    toInstance(encoding: ReviewSatusEncoding): Review.ReviewSatus | null {
+    toInstance(encoding: ReviewStatusEncoding): Review.ReviewStatus | null {
         let uploadFiles = [];
         let uploadFileEncodings = encoding.uploadFileEncodings;
         let lengthOfUploadFile: number = uploadFileEncodings.length;
         for (let i=0; i<lengthOfUploadFile; i++) {
-           let uploadFile = UploadFileEncoding.toInstance(uploadFileEncodings[i]);
+           let uploadFile = UploadFileStatusEncoding.toInstance(uploadFileEncodings[i]);
         if (uploadFile) uploadFiles.push(uploadFile);
         }
 
         if (uploadFiles.length === uploadFileEncodings.length) {
-            return new Review.ReviewSatus(
+            return new Review.ReviewStatus(
                 uploadFiles,
                 this.progress  
             )
@@ -485,19 +515,20 @@ class ReviewSatusEncoding extends ClassEncoding {
         }
     }
 
-    public static is(code: any): code is ReviewSatusEncoding { 
+    public static is(code: any): code is ReviewStatusEncoding { 
         if (!Object.values(Review.ReviewingProgress).includes(code.progress)) return false;
         if (!code.uploadFileEncodings) return false;
         let isUploadFileEncodings = true;
         code.uploadFileEncodings.forEach((element: any)=> {
-            if (!UploadFileEncoding.is(element)) isUploadFileEncodings = false;
+            if (!UploadFileStatusEncoding.is(element)) isUploadFileEncodings = false;
         });
         if (!isUploadFileEncodings) return false;
 
         return true;
     }
 }
-class UploadFileEncoding extends ClassEncoding {
+
+class UploadFileStatusEncoding extends ClassEncoding {
     constructor(
         readonly fileName: string,        
         protected currentStage: Review.UploadFileProcessingStage,
@@ -512,20 +543,21 @@ class UploadFileEncoding extends ClassEncoding {
         super('UploadFile',false);
     }
 
-    public static toInstance(encoding: UploadFileEncoding): Review.UploadFile | null{
-      return new Review.UploadFile (
+    public static toInstance(encoding: UploadFileStatusEncoding): Review.UploadFileStatus | null{
+      return new Review.UploadFileStatus (
         encoding.fileName,        
         encoding.currentStage,
-        encoding.hasError,
         encoding.numberOfPages,
         encoding.fileAddress,
         encoding.previewPagesAddress,
         encoding.printablePagesAddress,
         encoding.errorStage
       );
+    }
+    public static fromInstance(): UploadFileStatusEncoding {
 
     }
-    public static is(code: any): code is UploadFileEncoding { 
+    public static is(code: any): code is UploadFileStatusEncoding { 
         if (typeof code.className !== 'string') return false;
         if (typeof code.hasError !== 'boolean') return false;
         if (code.numberOfPages && typeof code.numberOfPages !== 'number') return false;
@@ -548,18 +580,58 @@ class UploadFileEncoding extends ClassEncoding {
     }
 }
 
-class ReviewedModelEncoding extends ClassEncoding {
+class ReviewModelEncoding extends ConcreteClassEncoding {
     constructor(
-        
+        public readonly modelIndexInReviewItem: number,
+        public readonly framedPageEncodings: Map<string, FramedPageEncoding>
     ) {
-        super('ReviewModel',false);
+        super('ReviewModel');
     }
 
-    public static toInstance(encoding: ReviewedModelEncoding): Review.ReviewedModel | null {
-       
+    public static toInstance(encoding: ReviewModelEncoding, reviewItem: Review.ReviewItem): Review.ReviewModel {
+        let reviewModel = new Review.ReviewModel(
+            encoding.modelIndexInReviewItem,
+            reviewItem
+        );
+        let framedPageEncodings = encoding.framedPageEncodings;
+        let framedPages = new Map<string, Review.FramedPage>();
+        framedPageEncodings.forEach((framedPageEncoding, frameIndex) => {
+            framedPages.set(
+                frameIndex,
+                FramedPageEncoding.toInstance(
+                    framedPageEncoding,
+                    reviewModel
+                )
+            );
+        });
+        reviewModel.setFramedPages(framedPages);
+        return reviewModel;
+    }
+    public static fromInstance(reviewModel: Review.ReviewModel): ReviewModelEncoding {
+        let framedPages = reviewModel.getFramedPages();
+        let framedPageEncodings = new Map<string, FramedPageEncoding>();
+        framedPages.forEach((framedPage, frameIndex) => {
+            framedPageEncodings.set(
+                frameIndex,
+                FramedPageEncoding.fromInstance(framedPage)
+            )
+        });
+        return new ReviewModelEncoding(
+            reviewModel.modelIndexInReviewItem,
+            framedPageEncodings
+        );
     }
 
-    public static is(code: any): code is ReviewedModelEncoding { 
+    public static is(code: any): code is ReviewModelEncoding { 
         
+    }
+}
+
+class FramedPageEncoding extends ConcreteClassEncoding {
+    public static toInstance(encoding: FramedPageEncoding, reviewModel: Review.ReviewModel): Review.FramedPage {
+
+    }
+    public static fromInstance(framedPage: Review.FramedPage): FramedPageEncoding {
+
     }
 }

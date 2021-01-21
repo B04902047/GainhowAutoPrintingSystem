@@ -86,8 +86,8 @@ export class SaddleStichBinding extends BookBindingStyle {
 
 class Coating {
     public isCoatable(paper: Product.Paper): boolean {
-        if (!paper.isSmooth) return false;
-        if (paper.thickness < 150 || paper.thickness > 500) return false;
+        if (!paper.isSmooth) return false;  // 不能太粗糙，紙和膜之間會有空隙
+        if (paper.thickness < 150 || paper.thickness > 500) return false; // TODO: remove magic number and add comments
         return true;
     }
 }

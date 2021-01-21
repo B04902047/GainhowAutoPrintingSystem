@@ -199,59 +199,106 @@ export class ReviewRegistrationInfo {
 
 
 export class ReviewItem {
+    protected models: Map<number, ReviewModel> = new Map();
     constructor(
         public readonly reviewId: string,
         public readonly numberOfModels: number,
-        protected status: ReviewSatus,
-        protected readonly product: Product.Product,
-        protected models ?: Map<string, ReviewedModel>
-    ) {
-        if (!this.models) { // 創建的時候，如果沒有塞進來的話就創新的，有的話他就有
-            this.models = new Map<string, ReviewedModel>();
-            for (let modelIndex: number = 1; modelIndex <= numberOfModels; modelIndex++) {
-                this.models.set(
-                    String(modelIndex),
-                    new ReviewedModel(modelIndex, this)
-                );
-            }
+        public readonly status: ReviewStatus,
+        public readonly product: Product.Product, 
+    ) {}
+
+    public setModels(models: Map<number, ReviewModel>): boolean {
+        if (models.size !== this.numberOfModels) return false;
+        this.models = models;
+        return true;
+    }
+    public getModels(): Map<number, ReviewModel> {
+        if (this.models.size !== this.numberOfModels) return this.createAndSetNewModels();
+        return this.models;
+    }
+
+    public createAndSetNewModels(): Map<number, ReviewModel> {
+        this.models = new Map<number, ReviewModel>();
+        for (let modelIndex: number = 1; modelIndex <= this.numberOfModels; modelIndex++) {
+            this.models.set(
+                modelIndex,
+                new ReviewModel(modelIndex, this)
+            );
         }
-        
+        return this.models;
     }
 
-    public getFrame(index: string): Frame | undefined {
-        let frameDictionary: FrameDictionary = this.product.getFrameDictionary();
-        return frameDictionary.getFrame(index);
+    public getFrameDictionary(): FrameDictionary {
+        return this.product.getFrameDictionary();
     }
 }
 
-export class ReviewedModel {    
+export class ReviewModel {
+    protected framedPages: Map<string, FramedPage> = new Map();
+    protected frameDictionary?: FrameDictionary;
     constructor(
-        public readonly modelIndex: number,
+        public readonly modelIndexInReviewItem: number,
         public readonly reviewItem: ReviewItem
-       ) {
-    }
+    ) {}
     public getFrame(index: string): Frame | undefined {
-        return this.reviewItem.getFrame(index);
+        return this.getFrameDictionary().getFrame(index);
+    }
+    public getFramedPages(): Map<string, FramedPage> {
+        if (this.framedPages.size !== this.getNumberOfFramedPages()) return this.createAndSetNewFramedPages();
+        return this.framedPages;
+    }
+    public getNumberOfFramedPages(): number {
+        return this.getFrameIndices().length;
+    }
+    public setFramedPages(framedPages: Map<string, FramedPage>): boolean {
+        if (framedPages.size !== this.getNumberOfFramedPages()) return false;
+        this.framedPages = framedPages;
+        return true;
+    }
+    public createAndSetNewFramedPages(): Map<string, FramedPage> {
+        this.framedPages = new Map();
+        let frameIndices = this.getFrameIndices();
+        for (const frameIndex of frameIndices) {
+            this.framedPages.set(
+                frameIndex,
+                new FramedPage(
+                    frameIndex,
+                    this
+                )
+            )
+        }
+        return this.framedPages;
+    }
+    public getFrameIndices(): Array<string> {
+        return this.getFrameDictionary().getFrameIndices();
+    }
+    public getFrameDictionary(): FrameDictionary {
+        if (!this.frameDictionary) return this.getAndSetFrameDictionary();
+        return this.frameDictionary;
+    }
+    protected getAndSetFrameDictionary(): FrameDictionary {
+        this.frameDictionary = this.reviewItem.getFrameDictionary();
+        return this.frameDictionary;
     }
 }
 
-export class ReviewSatus {
+export class ReviewStatus {
     constructor (
-        protected uploadFiles: Array<UploadFile>,
+        protected uploadFileStatuses: Array<UploadFileStatus>,
         protected progress: ReviewingProgress
     ) {
         
     }
 }
 
-class FramedPage {   
+export class FramedPage {   
     inputPagePreviewAddress: string;
     printableResultingImageAddress?: string;
     printableResultingFileAddress?: string;
 
     constructor (
         public readonly pageIndex: string,
-        public readonly reviewModel: ReviewedModel,  
+        public readonly reviewModel: ReviewModel,  
         protected positionX: number = 0,
         protected positionY: number = 0,
         protected scaleX: number = 1,
@@ -324,11 +371,10 @@ export enum UploadFileProcessingStage {
     FINISHED = '處理完畢'
 }
 
-export class UploadFile {
+export class UploadFileStatus {
     constructor (
         readonly fileName: string,        
         protected currentStage: UploadFileProcessingStage,
-        protected hasError: boolean = false,
         protected numberOfPages?: number,
         protected fileAddress?: string,
         protected previewPagesAddress?: Array<string>,
@@ -336,6 +382,10 @@ export class UploadFile {
         protected errorStage?: UploadFileProcessingStage
     ) {
 
+    }
+    public hasError(): boolean {
+        if (this.errorStage) return true;
+        return false;
     }
 }
 
