@@ -11,7 +11,7 @@ export abstract class FrameDictionary {
         return Object.keys(this.frames);
     }
     public getFrame(frameIndex: string): Frame | undefined {
-        return this.frames[frameIndex];
+        return this.frames.get(frameIndex);
     }
     
     protected abstract createFrames(): Map<string, Frame>;
@@ -110,20 +110,20 @@ abstract class BookCoverFrame extends BleededRectangleFrame {
 }
 abstract class BookFrameDictionary extends FrameDictionary {
     protected coverFrame: BookCoverFrame;
-    protected innerPageFrames: { [pageIndex: string]: Frame };
+    protected innerPageFrames: Map<string, RectangleFrame>;
     
     constructor(product: Product.Book)   {
         super(product);
         this.coverFrame = this.createBookCoverFrame();
         let innerFramePrototype: BleededRectangleFrame = this.createInnerPageFramePrototype();
-        this.innerPageFrames = {};
+        this.innerPageFrames =new Map<string, RectangleFrame>();;
         for (let i=1; i<=product.numberOfPages; i++) {
-            this.innerPageFrames[i] = innerFramePrototype;
+            this.innerPageFrames.set(String(i), innerFramePrototype);
         }
     }
     protected createFrames(): Map<string, RectangleFrame> {
         let frames = new Map<string, RectangleFrame>();
-        frames['cover'] = this.coverFrame;
+        frames.set('cover', this.coverFrame);
         frames = Object.assign(frames, this.innerPageFrames);
         return frames;
     }
