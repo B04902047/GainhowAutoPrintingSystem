@@ -4,9 +4,9 @@ import * as Pricing from "./Pricing";
 import * as Review from "./Review";
 
 export abstract class Product {
-    protected abstract pricingCalculator: Pricing.PriceCalculator;
-    protected abstract production: Production.Production;
-    protected abstract frameDictionary: Review.FrameDictionary;
+    protected abstract priceCalculator?: Pricing.PriceCalculator;
+    protected abstract production?: Production.Production;
+    protected abstract frameDictionary?: Review.FrameDictionary;
     public loadPrice(): Promise<number> {
         return this.getOrCreatePriceCalculator().loadPrice();
     };
@@ -21,25 +21,28 @@ export abstract class Product {
     
 
     protected getOrCreatePriceCalculator(): Pricing.PriceCalculator {
-        if(!this.pricingCalculator) this.createAndSetPriceCalculator();
-        return this.pricingCalculator;
+        if(!this.priceCalculator) return this.createAndSetPriceCalculator();
+        return this.priceCalculator;
     }
     protected getOrCreateProduction(): Production.Production {
-        if(!this.production) this.createAndSetProduction();
+        if(!this.production) return this.createAndSetProduction();
         return this.production;
     }
     protected getOrCreateFrameDictionary(): Review.FrameDictionary {
-        if(!this.frameDictionary) this.createAndSetFrameDictionary();
+        if(!this.frameDictionary) return this.createAndSetFrameDictionary();
         return this.frameDictionary;
     }
-    private createAndSetPriceCalculator(): void {
-        this.pricingCalculator = this.createPriceCalculator();      
+    private createAndSetPriceCalculator(): Pricing.PriceCalculator {
+        this.priceCalculator = this.createPriceCalculator(); 
+        return this.priceCalculator;     
     }
-    private createAndSetProduction(): void {
-        this.production = this.createProduction();   
+    private createAndSetProduction(): Production.Production {
+        this.production = this.createProduction();
+        return this.production; 
     }
-    private createAndSetFrameDictionary(): void {
+    private createAndSetFrameDictionary(): Review.FrameDictionary {
         this.frameDictionary = this.createFrameDictionary();
+        return this.frameDictionary;
     }
     protected abstract createPriceCalculator(): Pricing.PriceCalculator;
     protected abstract createProduction(): Production.Production;
@@ -47,15 +50,15 @@ export abstract class Product {
 }
 
 export class SingleSheet extends Product {
-    protected production: Production.SingleSheetProduction;    
-    protected frameDictionary: Review.SingleSheetFrameDictionary;
+    protected production?: Production.SingleSheetProduction;    
+    protected frameDictionary?: Review.SingleSheetFrameDictionary;
     protected createProduction(): Production.Production {
         throw new Error("Method not implemented.");
     }
     protected createFrameDictionary(): Review.SingleSheetFrameDictionary {
         return new Review.SingleSheetFrameDictionary(this);
     }
-    protected pricingCalculator: Pricing.SingleSheetHardCodeConfiguratedPriceCalculator;
+    protected priceCalculator?: Pricing.SingleSheetHardCodeConfiguratedPriceCalculator;
     protected createPriceCalculator(): Pricing.SingleSheetHardCodeConfiguratedPriceCalculator {
         return new Pricing.SingleSheetHardCodeConfiguratedPriceCalculator(this);
     }
@@ -119,14 +122,17 @@ export class Coat {
 }
 
 export abstract class Book extends Product {
-    readonly cover: BookCover;
-    protected production: Production.BookProduction;
+    protected abstract readonly cover: BookCover;
+    protected abstract production?: Production.BookProduction;
     protected innerPages : {
         [pageIndex: number]: Page
     } = {};
-    protected getBindingStyle(): Production.BookBindingStyle {
+    public getBindingStyle(): Production.BookBindingStyle {
         return (this.getOrCreateProduction() as Production.BookProduction).bindingStyle;
     };
+    public numberOfInnerPagesIsValid(): boolean {
+        return this.getBindingStyle().numberOfInnerPagesIsBindable(this.numberOfPages);
+    }
     constructor(
         public coverWidth: number,
         public coverHeight: number,
@@ -160,8 +166,8 @@ class SaddleStichBindingBookCover extends BookCover {
 
 export class SaddleStichBindingBook extends Book {
 
-    protected production: Production.SaddleStichBingingBookProduction;
-    protected frameDictionary: Review.SaddleStichBindindBookFrameDictionary;
+    protected production?: Production.SaddleStichBingingBookProduction;
+    protected frameDictionary?: Review.SaddleStichBindindBookFrameDictionary;
     constructor(
         coverWidth: number, 
         coverHeight: number, 
@@ -188,7 +194,7 @@ export class SaddleStichBindingBook extends Book {
     protected createFrameDictionary(): Review.FrameDictionary {
         return new Review.SaddleStichBindindBookFrameDictionary(this);
     }
-    protected pricingCalculator: Pricing.SaddleStichBindingBookSingletonRequestConfiguratedPriceCalculator;
+    protected priceCalculator?: Pricing.SaddleStichBindingBookSingletonRequestConfiguratedPriceCalculator;
     public createPriceCalculator(): Pricing.SaddleStichBindingBookSingletonRequestConfiguratedPriceCalculator {
         return new Pricing.SaddleStichBindingBookSingletonRequestConfiguratedPriceCalculator(this);
     }

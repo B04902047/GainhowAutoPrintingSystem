@@ -1,20 +1,19 @@
 import * as Product from "./Product";
 
 abstract class ClassEncoding {
-    className: string;
-    isAbstract: boolean;
+    constructor(
+        readonly className: string,
+        readonly isAbstract: boolean
+    ) {}
     public static toJson(code: ClassEncoding): string {
         return JSON.stringify(code);
     }
-    public static fromJson(json: string): ClassEncoding | null {
-        let code: any;
+    public static fromJson(text: string): any | null {
         try {
-            code = JSON.parse(json);
+            return JSON.parse(text);
         } catch {
             return null;
         }
-        if (!this.is(code)) return null;
-        return code;
     }
     public static is(code: any): code is ClassEncoding {
         if (!code.className) return false;
@@ -25,14 +24,25 @@ abstract class ClassEncoding {
 
 abstract class ConcreteClassEncoding extends ClassEncoding {
     isAbstract: false = false;
-    subclassName?: string;
-    subclassEncoding?: ConcreteClassEncoding;
+    constructor(
+        readonly className: string,
+        readonly subclassName?: string,
+        readonly subclassEncoding?: ClassEncoding
+    ) {
+        super(className, false);
+    }
 }
 
+
 class AbstractClassEncoding extends ClassEncoding {
-    readonly isAbstract: true = true;
-    subclassName: string;
-    subclassEncoding: ClassEncoding;
+    isAbstract: true = true;
+    constructor(
+        readonly className: string,
+        readonly subclassName: string,
+        readonly subclassEncoding: ClassEncoding
+    ) {
+        super(className, true);
+    }
     public static is(code: any): code is AbstractClassEncoding {
         if (code.isAbstract !== true) return false;
         if (!code.subclassName) return false;
@@ -50,9 +60,16 @@ enum ProductSubclassName {
 type ProductSubclassEncoding = BookEncoding | SingleSheetEncoding;
 
 class ProductEncoding extends AbstractClassEncoding {
-    readonly className: "Product" = "Product";
-    subclassName: ProductSubclassName;
-    subclassEncoding: ProductSubclassEncoding;
+    constructor(
+        readonly subclassName: ProductSubclassName,
+        readonly subclassEncoding: ProductSubclassEncoding
+    ) {
+        super(
+            "Product",
+            subclassName,
+            subclassEncoding
+        );
+    }
 
     /**
      * @override
@@ -69,20 +86,24 @@ class ProductEncoding extends AbstractClassEncoding {
                 return false;
         }
     }
-    public static encode(subclassEncoding: ProductSubclassEncoding): ProductEncoding {
-        return {
-            className: "Product",
-            isAbstract: true,
-            subclassName: subclassEncoding.className,
-            subclassEncoding
-        };
+    public static decode(json: string): Product.Product | null {
+        let productEncoding: any | null = ProductEncoding.fromJson(json);
+        if (productEncoding === null) return null;
+        return ProductEncoding.toInstance(productEncoding);        
     }
-    public static decode(encoding: ProductEncoding): Product.Product {
+    public static fromSubclassEncoding(subclassEncoding: ProductSubclassEncoding): ProductEncoding {
+        return new ProductEncoding(
+            subclassEncoding.className,
+            subclassEncoding
+        );
+    }
+    public static toInstance(encoding: ProductEncoding): Product.Product | null {
+        if (!this.is(encoding)) return null;
         switch (encoding.subclassName) {
             case ProductSubclassName.BOOK:
-                return BookEncoding.decode(encoding.subclassEncoding as BookEncoding);
+                return BookEncoding.toInstance(encoding.subclassEncoding as BookEncoding);
             case ProductSubclassName.SINGLE_SHEET:
-                return SingleSheetEncoding.decode(encoding.subclassEncoding as SingleSheetEncoding);
+                return SingleSheetEncoding.toInstance(encoding.subclassEncoding as SingleSheetEncoding);
         }
     }
 }
@@ -99,9 +120,17 @@ type BookSubclassEncoding
     | ButterflyBindingBookEncoding;
 
 class BookEncoding extends AbstractClassEncoding {
-    className: ProductSubclassName = ProductSubclassName.BOOK;
-    subclassName: BookSubclassName;
-    subclassEncoding: BookSubclassEncoding;
+    readonly className: ProductSubclassName = ProductSubclassName.BOOK;
+    constructor (
+        readonly subclassName: BookSubclassName,
+        readonly subclassEncoding: BookSubclassEncoding
+    ) {
+        super(
+            ProductSubclassName.BOOK,
+            subclassName,
+            subclassEncoding
+        )
+    }
     public static is(code: any): code is BookEncoding {
         if (code.className !== ProductSubclassName.BOOK) return false;
         switch (code.subclassName) {
@@ -112,32 +141,32 @@ class BookEncoding extends AbstractClassEncoding {
             default: return false;
         }
         if (!AbstractClassEncoding.is(code)) return false;
+        return true;
     }
-    public static decode(encoding: BookEncoding): Product.Book | null {
+    public static toInstance(encoding: BookEncoding): Product.Book | null {
         let subclassEncoding: BookSubclassEncoding = encoding.subclassEncoding;
         switch (encoding.subclassName) {
             case BookSubclassName.SADDLE_STICH_BINDING_BOOK:
                 if (SaddleStichBindingBookEncoding.is(subclassEncoding)) {
-                    return SaddleStichBindingBookEncoding.decode(subclassEncoding);
+                    return SaddleStichBindingBookEncoding.toInstance(subclassEncoding);
                 }
             case BookSubclassName.PERFECT_BINDING_BOOK:
                 if (PerfectBindingBookEncoding.is(subclassEncoding)) {
-                    return PerfectBindingBookEncoding.decode(subclassEncoding);
+                    return PerfectBindingBookEncoding.toInstance(subclassEncoding);
                 }
             case BookSubclassName.BUTTERFLY_BINDING_BOOK:
                 if (ButterflyBindingBookEncoding.is(subclassEncoding)) {
-                    return ButterflyBindingBookEncoding.decode(subclassEncoding as ButterflyBindingBookEncoding);    
+                    return ButterflyBindingBookEncoding.toInstance(subclassEncoding as ButterflyBindingBookEncoding);    
                 }
             }
         return null;
     }
-    public static encode(subclassEncoding: BookSubclassEncoding): BookEncoding {
-        return {
-            className: ProductSubclassName.BOOK,
-            isAbstract: true,
-            subclassName: subclassEncoding.className,
+    public static fromSubclassEncoding(subclassEncoding: BookSubclassEncoding): ProductEncoding {
+        let bookEncoding = new BookEncoding(
+            subclassEncoding.className,
             subclassEncoding
-        };
+        );
+        return ProductEncoding.fromSubclassEncoding(bookEncoding);
     }
 }
 
@@ -152,7 +181,9 @@ class SaddleStichBindingBookEncoding extends ConcreteClassEncoding {
         readonly coverCoating?: Product.Coat, 
         readonly innerPageCoating?: Product.Coat
     ) {
-        super();
+        super(
+            BookSubclassName.SADDLE_STICH_BINDING_BOOK,
+        );
     }
     public static is(code: any): code is SaddleStichBindingBookEncoding {
         if (typeof code.coverWidth !== "number") return false;
@@ -168,7 +199,11 @@ class SaddleStichBindingBookEncoding extends ConcreteClassEncoding {
         ) return false;
         return true;
     }
-    public static decode(encoding: SaddleStichBindingBookEncoding): Product.SaddleStichBindingBook | null {
+    public static encode(saddleStichBindingBook: Product.SaddleStichBindingBook): string {
+        let encoding: ProductEncoding = this.fromInstance(saddleStichBindingBook);
+        return this.toJson(encoding);
+    }
+    public static toInstance(encoding: SaddleStichBindingBookEncoding): Product.SaddleStichBindingBook | null {
         return new Product.SaddleStichBindingBook(
             encoding.coverWidth,
             encoding.coverHeight, 
@@ -179,8 +214,8 @@ class SaddleStichBindingBookEncoding extends ConcreteClassEncoding {
             encoding.innerPageCoating
         );
     }
-    public static encode(product: Product.SaddleStichBindingBook): SaddleStichBindingBookEncoding {
-        return new SaddleStichBindingBookEncoding(
+    public static fromInstance(product: Product.SaddleStichBindingBook): ProductEncoding {
+        let saddleStichBindingBookEncoding = new SaddleStichBindingBookEncoding(
             product.coverWidth,
             product.coverHeight, 
             product.numberOfPages, 
@@ -188,7 +223,8 @@ class SaddleStichBindingBookEncoding extends ConcreteClassEncoding {
             product.innerPagesPaperTexture, 
             product.coverCoating, 
             product.innerPageCoating
-        ); 
+        );
+        return BookEncoding.fromSubclassEncoding(saddleStichBindingBookEncoding);
     }
 }
 class PerfectBindingBookEncoding extends ConcreteClassEncoding {
@@ -205,7 +241,7 @@ class PaperEncoding extends ConcreteClassEncoding {
         readonly isSmooth: boolean, // 表面是否光滑（會影響能否上膜）
         readonly description: string
     ) {
-        super();
+        super("Paper");
     }
     public static is(code: any): code is PaperEncoding {
         if (!PaperMaterialEncoding.is(code.material)) return false;
@@ -214,7 +250,7 @@ class PaperEncoding extends ConcreteClassEncoding {
         if (typeof code.description !== "string") return false;
         return true;
     }
-    public static encode(paper: Product.Paper): PaperEncoding {
+    public static fromInstance(paper: Product.Paper): PaperEncoding {
         return new PaperEncoding(
             paper.material,
             paper.thickness,
@@ -222,7 +258,7 @@ class PaperEncoding extends ConcreteClassEncoding {
             paper.description
         );
     }
-    public static decode(encoding: PaperEncoding): Product.Paper {
+    public static toInstance(encoding: PaperEncoding): Product.Paper {
         return new Product.Paper(
             encoding.material,
             encoding.thickness,
@@ -237,7 +273,7 @@ export class PaperMaterialEncoding extends ConcreteClassEncoding {
         readonly name: string,
         readonly aliases: Array<string>
     ) {
-        super();
+        super("PaperMaterial");
     }
     public static is(code: any): code is PaperMaterialEncoding {
         if (typeof code.name !== "string") return false;
@@ -248,13 +284,13 @@ export class PaperMaterialEncoding extends ConcreteClassEncoding {
         }
         return true;
     }
-    public static encode(paperMaterial: Product.PaperMaterial): PaperMaterialEncoding {
+    public static fromInstance(paperMaterial: Product.PaperMaterial): PaperMaterialEncoding {
         return new PaperMaterialEncoding(
             paperMaterial.name,
             paperMaterial.aliases
         )
     }
-    public static decode(encoding: PaperMaterialEncoding): Product.PaperMaterial {
+    public static toInstance(encoding: PaperMaterialEncoding): Product.PaperMaterial {
         return new Product.PaperMaterial(
             encoding.name,
             encoding.aliases
@@ -267,7 +303,7 @@ class CoatEncoding extends ConcreteClassEncoding {
         readonly name: string,
         readonly chineseName: string
     ) {
-        super();
+        super("Coat");
     }
     public static is(code: any): code is CoatEncoding {
         return (
@@ -275,13 +311,13 @@ class CoatEncoding extends ConcreteClassEncoding {
             && (typeof code.chineseName === "string")
         );
     }
-    public static encode(coat: Product.Coat): CoatEncoding {
+    public static fromInstance(coat: Product.Coat): CoatEncoding {
         return new CoatEncoding(
             coat.name,
             coat.chineseName
         );
     }
-    public static decode(encoding: CoatEncoding): Product.Coat {
+    public static toInstance(encoding: CoatEncoding): Product.Coat {
         return new Product.Coat(
             encoding.name,
             encoding.chineseName
@@ -299,7 +335,12 @@ class SingleSheetEncoding extends ConcreteClassEncoding {
         public frontSideCoat?: Product.Coat,
         public backSideCoat?: Product.Coat
     ) {
-        super();
+        super("SingleSheet");
+    }
+
+    public static encode(singleSheet: Product.SingleSheet): string {
+        let encoding: ProductEncoding = this.fromInstance(singleSheet);
+        return this.toJson(encoding);
     }
     public static is(code: any): code is SingleSheetEncoding {
         if (typeof code.width !== "number") return false;
@@ -314,8 +355,8 @@ class SingleSheetEncoding extends ConcreteClassEncoding {
         ) return false;
         return true;
     }
-    public static encode(product: Product.SingleSheet): SingleSheetEncoding {
-        return new SingleSheetEncoding(
+    public static fromInstance(product: Product.SingleSheet): ProductEncoding {
+        let singleSheetEncoding = new SingleSheetEncoding(
             product.width,
             product.height,
             product.getIsDoubleSided(),
@@ -323,8 +364,9 @@ class SingleSheetEncoding extends ConcreteClassEncoding {
             product.frontSideCoat,
             product.backSideCoat
         );
+        return ProductEncoding.fromSubclassEncoding(singleSheetEncoding);
     }
-    public static decode(encoding: SingleSheetEncoding): Product.SingleSheet {
+    public static toInstance(encoding: SingleSheetEncoding): Product.SingleSheet {
         return new Product.SingleSheet(
             encoding.width,
             encoding.height,

@@ -27,7 +27,6 @@ export abstract class BookProduction implements Production {
     protected validPaperTextureForInnerPages: Array<Product.Paper>;  //不要lazy innt? => 使用者拉開下拉選單的時候會等待一下才有東西，使用體驗不好? 但是先init的話，不知道要取得的時候，資料已經回來了沒有
     protected validPaperTextureForCover: Array<Product.Paper>;
     
-
     // 待討論
     public async getValidPaperTexturesForInnerPages(): Promise<Array<Product.Paper>> {
         if (!this.validPaperTextureForInnerPages) await this.createAndSetValidPaperTextureForInnerPages();
@@ -37,8 +36,6 @@ export abstract class BookProduction implements Production {
         if (!this.validPaperTextureForCover) await this.createAndSetValidPaperTextureForCover();
         return Promise.resolve(this.validPaperTextureForCover);
     }
-
-
     
     protected async createAndSetValidPaperTextureForInnerPages(): Promise<void> {
         this.validPaperTextureForInnerPages = await this.loadValidPaperTextureForInnerPages();
@@ -65,6 +62,8 @@ export class SaddleStichBingingBookProduction extends BookProduction {
 }
 
 export abstract class BookBindingStyle {
+    public abstract numberOfInnerPagesIsBindable(numberOfInnerPages: number): boolean;
+    public abstract getDescriptionOfTheNumberOfInnerPageRestriction(): string;
 }
 
 class ButterflyBinding extends BookBindingStyle {
