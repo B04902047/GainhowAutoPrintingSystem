@@ -23,7 +23,7 @@ abstract class ClassEncoding {
 }
 
 abstract class ConcreteClassEncoding extends ClassEncoding {
-    isAbstract: false = false;
+    readonly isAbstract: false = false;
     constructor(
         readonly className: string,
         readonly subclassName?: string,
@@ -33,9 +33,8 @@ abstract class ConcreteClassEncoding extends ClassEncoding {
     }
 }
 
-
 class AbstractClassEncoding extends ClassEncoding {
-    isAbstract: true = true;
+    readonly isAbstract: true = true;
     constructor(
         readonly className: string,
         readonly subclassName: string,
@@ -331,9 +330,9 @@ class SingleSheetEncoding extends ConcreteClassEncoding {
         public width: number,
         public height: number,
         public isDoubleSided: boolean,
-        public paperTexture: Product.Paper,
-        public frontSideCoat?: Product.Coat,
-        public backSideCoat?: Product.Coat
+        public paper: PaperEncoding,
+        public frontSideCoat?: CoatEncoding,
+        public backSideCoat?: CoatEncoding
     ) {
         super("SingleSheet");
     }
@@ -356,13 +355,17 @@ class SingleSheetEncoding extends ConcreteClassEncoding {
         return true;
     }
     public static fromInstance(product: Product.SingleSheet): ProductEncoding {
+        let frontSideCoatEncoding: CoatEncoding | undefined;
+        let backSideCoatEncoding: CoatEncoding | undefined;
+        if (product.frontSideCoat) frontSideCoatEncoding = CoatEncoding.fromInstance(product.frontSideCoat)
+        if (product.backSideCoat) backSideCoatEncoding = CoatEncoding.fromInstance(product.backSideCoat)
         let singleSheetEncoding = new SingleSheetEncoding(
             product.width,
             product.height,
             product.getIsDoubleSided(),
-            product.paperTexture,
-            product.frontSideCoat,
-            product.backSideCoat
+            PaperEncoding.fromInstance(product.paperTexture),
+            frontSideCoatEncoding,
+            backSideCoatEncoding
         );
         return ProductEncoding.fromSubclassEncoding(singleSheetEncoding);
     }
@@ -371,7 +374,7 @@ class SingleSheetEncoding extends ConcreteClassEncoding {
             encoding.width,
             encoding.height,
             encoding.isDoubleSided,
-            encoding.paperTexture,
+            encoding.paper,
             encoding.frontSideCoat,
             encoding.backSideCoat
         );
