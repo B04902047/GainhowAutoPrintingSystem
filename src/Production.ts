@@ -83,3 +83,11 @@ export class SaddleStichBinding extends BookBindingStyle {
         return SaddleStichBinding.instance;
     };
 }
+
+class Coating {
+    public isCoatable(paper: Product.Paper): boolean {
+        if (!paper.isSmooth) return false;
+        if (paper.thickness < 150 || paper.thickness > 500) return false;
+        return true;
+    }
+}

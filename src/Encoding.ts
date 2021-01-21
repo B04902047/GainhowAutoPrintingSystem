@@ -86,9 +86,9 @@ class ProductEncoding extends AbstractClassEncoding {
         }
     }
     public static decode(json: string): Product.Product | null {
-        let productEncoding: any | null = ProductEncoding.fromJson(json);
+        let productEncoding: any | null = this.fromJson(json);
         if (productEncoding === null) return null;
-        return ProductEncoding.toInstance(productEncoding);        
+        return this.toInstance(productEncoding);        
     }
     public static fromSubclassEncoding(subclassEncoding: ProductSubclassEncoding): ProductEncoding {
         return new ProductEncoding(
