@@ -10,8 +10,55 @@ export class SingleSheetProduction implements Production {
     }
 }
 
+class BookProductionOptions {
+    constructor(
+        protected validPaperTextureForInnerPages: Array<Product.Paper>,
+        protected validPaperTextureForCover: Array<Product.Paper>
+    ) {}
+}
+
+
+abstract class SingletonBookProductionOptionsRequestor {
+    /**
+     * @abstract
+     * must be overriden within concrete book production options requestors,
+     * otherwise there won't be any instances
+     */
+    protected static instance: SingletonBookProductionOptionsRequestor;
+    public static getInstance() { return this.instance; }
+
+    protected bookProductionOptions?: BookProductionOptions;
+    public async loadBookProductionOptions(): Promise<BookProductionOptions> {
+        if (!this.bookProductionOptions) return await this.requestAndSetBookProductionOptions();
+        return this.bookProductionOptions;
+    }
+    public async requestAndSetBookProductionOptions(): Promise<BookProductionOptions> {
+        this.bookProductionOptions = await this.requestBookProductionOptions();
+        return this.bookProductionOptions;
+    }
+    protected async requestBookProductionOptions(): Promise<BookProductionOptions> {
+        let validPaperTextureForInnerPages: Array<Product.Paper>
+            = await this.requestValidPaperTexturesForInnerPages();
+        let validPaperTextureForCover: Array<Product.Paper>
+            = await this.requestValidPaperTexturesForCover();
+        return new BookProductionOptions(
+            validPaperTextureForInnerPages,
+            validPaperTextureForCover
+        )
+    }
+    protected abstract requestValidPaperTexturesForInnerPages(): Promise<Array<Product.Paper>>;
+    protected abstract requestValidPaperTexturesForCover(): Promise<Array<Product.Paper>>;
+}
+
 export abstract class BookProduction implements Production {
     abstract readonly bindingStyle: BookBindingStyle;
+    /**
+     * @abstract
+     * must be overriden within concrete book productions,
+     * otherwise there won't be any options
+     */
+    protected static options: Promise<BookProductionOptions>
+        = Promise.resolve(new BookProductionOptions([], []));
     constructor(
         protected readonly product: Product.Book
     ) {}
@@ -22,30 +69,19 @@ export abstract class BookProduction implements Production {
     public abstract estimateSpineWidth(): number;
     protected abstract innerPageShouldCoat(): boolean;
     protected abstract coverShouldCoat(): boolean;
-    
+}
 
-    protected validPaperTextureForInnerPages: Array<Product.Paper> = [];  //不要lazy innt? => 使用者拉開下拉選單的時候會等待一下才有東西，使用體驗不好? 但是先init的話，不知道要取得的時候，資料已經回來了沒有
-    protected validPaperTextureForCover: Array<Product.Paper> = [];
-    
-    // 待討論
-    public async getValidPaperTexturesForInnerPages(): Promise<Array<Product.Paper>> {
-        if (!this.validPaperTextureForInnerPages) await this.createAndSetValidPaperTextureForInnerPages();
-        return Promise.resolve(this.validPaperTextureForInnerPages);
+class SingletonSaddleStichBindingBookProductionOptionsRequestor extends SingletonBookProductionOptionsRequestor {
+    protected instance = new SingletonSaddleStichBindingBookProductionOptionsRequestor();
+    private constructor() {
+        super()
     }
-    public async getValidPaperTexturesForCover(): Promise<Array<Product.Paper>> {
-        if (!this.validPaperTextureForCover) await this.createAndSetValidPaperTextureForCover();
-        return Promise.resolve(this.validPaperTextureForCover);
+    protected requestValidPaperTexturesForInnerPages(): Promise<Product.Paper[]> {
+        throw new Error('Method not implemented.');
     }
-    
-    protected async createAndSetValidPaperTextureForInnerPages(): Promise<void> {
-        this.validPaperTextureForInnerPages = await this.loadValidPaperTextureForInnerPages();
+    protected requestValidPaperTexturesForCover(): Promise<Product.Paper[]> {
+        throw new Error('Method not implemented.');
     }
-    protected async createAndSetValidPaperTextureForCover(): Promise<void> {
-        this.validPaperTextureForCover = await this.loadValidPaperTextureForCover();
-    }
-    protected abstract loadValidPaperTextureForInnerPages(): Promise<Array<Product.Paper>>;
-    protected abstract loadValidPaperTextureForCover(): Promise<Array<Product.Paper>>;
-
 }
 
 export class SaddleStichBingingBookProduction extends BookProduction {
@@ -53,12 +89,8 @@ export class SaddleStichBingingBookProduction extends BookProduction {
     public estimateSpineWidth(): number { return 0; }
     protected innerPageShouldCoat(): boolean { return false; }
     protected coverShouldCoat(): boolean { return true; }
-    protected loadValidPaperTextureForInnerPages(): Promise<Product.Paper[]> {
-        throw new Error('Method not implemented.');
-    }
-    protected loadValidPaperTextureForCover(): Promise<Product.Paper[]> {
-        throw new Error('Method not implemented.');
-    }
+    protected static options: Promise<BookProductionOptions>
+        = SingletonSaddleStichBindingBookProductionOptionsRequestor.getInstance().loadBookProductionOptions();
 }
 
 export abstract class BookBindingStyle {

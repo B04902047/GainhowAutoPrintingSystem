@@ -42,7 +42,7 @@ export abstract class Product implements ProductInterface {
     }
     private createAndSetPriceCalculator(): Pricing.PriceCalculator {
         this.priceCalculator = this.createPriceCalculator(); 
-        return this.priceCalculator;     
+        return this.priceCalculator;    
     }
     private createAndSetProduction(): Production.Production {
         this.production = this.createProduction();
@@ -185,6 +185,12 @@ export abstract class Book extends Product implements BookInterface {
         }
         return this.innerPages;
     }
+    public async loadValidPaperTexturesForInnerPages(): Promise<Array<Paper>> {
+        return (this.getOrCreateProduction() as Production.BookProduction).loadValidPaperTexturesForInnerPages();
+    }
+    public async loadValidPaperTexturesForCover(): Promise<Array<Paper>> {
+        return (this.getOrCreateProduction() as Production.BookProduction).loadValidPaperTexturesForCover();
+    }
 }
 
 abstract class BookCover {
@@ -232,4 +238,9 @@ export class SaddleStichBindingBook extends Book implements SaddleStichBindingBo
         return new Pricing.SaddleStichBindingBookSingletonRequestConfiguratedPriceCalculator(this);
     }
     
+}
+
+
+function Demo(): void {
+
 }

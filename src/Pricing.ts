@@ -11,7 +11,7 @@ export abstract class PriceCalculator {
 
 // 實作方案一：傳送產品資料，直接和AIPS取得價錢
 abstract class BusyPriceRequestor extends PriceCalculator {
-    protected readonly requestUrl: string;
+    protected abstract readonly requestUrl: string;
 }
 
 // 實作方案二：取得產品參數，計算出價錢之後回傳
@@ -37,7 +37,7 @@ class PricingConfig {
 
 // ConfiguratedPriceCalculator的實作方式一 : 去資料庫取得
 abstract class PricingConfigRequestor {
-    protected readonly requestUrl: string;
+    protected abstract readonly requestUrl: string;
     public abstract loadPricingConfig(): Promise<PricingConfig>;
 }
 
