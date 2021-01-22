@@ -63,7 +63,7 @@ export abstract class HardCodeConfiguratePriceCalulator extends ConfiguratedPric
         this.createAndSetPricingConfig();
     }
     public getOrCreatePricingConfig(): PricingConfig {
-        if (!this.pricingConfig) this.createAndSetPricingConfig();
+        if (!this.pricingConfig) return this.createAndSetPricingConfig();
         return this.pricingConfig;
     };
     protected loadPricingConfig(): Promise<PricingConfig> {
