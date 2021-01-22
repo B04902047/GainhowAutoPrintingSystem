@@ -20,7 +20,7 @@ export abstract class FrameDictionary {
     protected abstract createFrames(): Map<string, Frame>;
 }
 
-abstract class Frame {
+export abstract class Frame {
     public readonly foldLines: Array<Line>;   // 有可能是0條，但不會是undefined
     public readonly cutLines: Array<Line>;    // 有可能是0條，但不會是undefined
     constructor(
@@ -37,7 +37,7 @@ abstract class Frame {
 }
 
 
-class Line {
+export class Line {
     constructor(
         readonly startX: number,
         readonly startY: number,

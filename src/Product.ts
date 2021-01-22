@@ -10,10 +10,11 @@ export const PRODUCT_TYPE_DISCRIMINATOR = {
     subTypes: PRODUCT_SUBTYPES
 };
 
+@Exclude()
 export abstract class Product implements ProductInterface {
     readonly abstract __productSubType: ProductSubtypeName;
-    protected abstract priceCalculator?: Pricing.PriceCalculator;
-    protected abstract production?: Production.Production;
+    protected abstract _priceCalculator?: Pricing.PriceCalculator;
+    protected abstract _production?: Production.Production;
     protected abstract _frameDictionary?: Review.FrameDictionary;
     public loadPrice(): Promise<number> {
         return this.getOrCreatePriceCalculator().loadPrice();
@@ -26,27 +27,29 @@ export abstract class Product implements ProductInterface {
         return production.isProducible();
     }
     // TODO: 把production 要給人使用的method包裝成一個public的method
-    
+    public get production(): Production.Production {
+        return this.getOrCreateProduction();
+    }
 
     protected getOrCreatePriceCalculator(): Pricing.PriceCalculator {
-        if(!this.priceCalculator) return this.createAndSetPriceCalculator();
-        return this.priceCalculator;
+        if(!this._priceCalculator) return this.createAndSetPriceCalculator();
+        return this._priceCalculator;
     }
     protected getOrCreateProduction(): Production.Production {
-        if(!this.production) return this.createAndSetProduction();
-        return this.production;
+        if(!this._production) return this.createAndSetProduction();
+        return this._production;
     }
     protected getOrCreateFrameDictionary(): Review.FrameDictionary {
         if(!this._frameDictionary) return this.createAndSetFrameDictionary();
         return this._frameDictionary;
     }
     private createAndSetPriceCalculator(): Pricing.PriceCalculator {
-        this.priceCalculator = this.createPriceCalculator(); 
-        return this.priceCalculator;    
+        this._priceCalculator = this.createPriceCalculator(); 
+        return this._priceCalculator;    
     }
     private createAndSetProduction(): Production.Production {
-        this.production = this.createProduction();
-        return this.production; 
+        this._production = this.createProduction();
+        return this._production; 
     }
     private createAndSetFrameDictionary(): Review.FrameDictionary {
         this._frameDictionary = this.createFrameDictionary();
@@ -59,7 +62,7 @@ export abstract class Product implements ProductInterface {
 
 export class SingleSheet extends Product implements SingleSheetInterface {
     readonly __productSubType: "SingleSheet" = "SingleSheet";
-    protected production?: Production.SingleSheetProduction;    
+    protected _production?: Production.SingleSheetProduction;    
     protected _frameDictionary?: Review.SingleSheetFrameDictionary;
     protected createProduction(): Production.Production {
         throw new Error("Method not implemented.");
@@ -67,7 +70,7 @@ export class SingleSheet extends Product implements SingleSheetInterface {
     protected createFrameDictionary(): Review.SingleSheetFrameDictionary {
         return new Review.SingleSheetFrameDictionary(this);
     }
-    protected priceCalculator?: Pricing.SingleSheetHardCodeConfiguratedPriceCalculator;
+    protected _priceCalculator?: Pricing.SingleSheetHardCodeConfiguratedPriceCalculator;
     protected createPriceCalculator(): Pricing.SingleSheetHardCodeConfiguratedPriceCalculator {
         return new Pricing.SingleSheetHardCodeConfiguratedPriceCalculator(this);
     }
@@ -154,7 +157,7 @@ export class Coat implements CoatInterface {
 export abstract class Book extends Product implements BookInterface {
     readonly abstract __productSubType: BookSubtypeName
     protected abstract readonly cover: BookCover;
-    protected abstract production?: Production.BookProduction;
+    protected abstract _production?: Production.BookProduction;
     protected innerPages : {
         [pageIndex: number]: Page
     } = {};
@@ -203,7 +206,7 @@ class SaddleStichBindingBookCover extends BookCover {
 
 export class SaddleStichBindingBook extends Book implements SaddleStichBindingBookInterface {
     readonly __productSubType: "SaddleStichBindingBook" = "SaddleStichBindingBook";
-    protected production?: Production.SaddleStichBingingBookProduction;
+    protected _production?: Production.SaddleStichBingingBookProduction;
     protected _frameDictionary?: Review.SaddleStichBindindBookFrameDictionary;
     bindingStyle = Production.SaddleStichBinding.getInstance();
     cover = new SaddleStichBindingBookCover();
@@ -233,7 +236,7 @@ export class SaddleStichBindingBook extends Book implements SaddleStichBindingBo
     protected createFrameDictionary(): Review.FrameDictionary {
         return new Review.SaddleStichBindindBookFrameDictionary(this);
     }
-    protected priceCalculator?: Pricing.SaddleStichBindingBookSingletonRequestConfiguratedPriceCalculator;
+    protected _priceCalculator?: Pricing.SaddleStichBindingBookSingletonRequestConfiguratedPriceCalculator;
     public createPriceCalculator(): Pricing.SaddleStichBindingBookSingletonRequestConfiguratedPriceCalculator {
         return new Pricing.SaddleStichBindingBookSingletonRequestConfiguratedPriceCalculator(this);
     }
