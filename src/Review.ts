@@ -1,5 +1,5 @@
 import * as Product from "./Product"
-import { Expose, plainToClass, Transform, Type } from 'class-transformer';
+import { Exclude, Expose, plainToClass, Transform, Type } from 'class-transformer';
 import { FramedPageInterface, ReviewingProgress, ReviewItemInterface, ReviewModelInterface, ReviewStatusInterface, UploadFileProcessingStage, UploadFileStatusInterface } from "./Interfaces";
 
 
@@ -213,6 +213,8 @@ export class ReviewRegistrationInfo {
 
 
 export class ReviewItem implements ReviewItemInterface {
+    
+    @Exclude()
     protected _models: Map<number, ReviewModel> = new Map();
 
     @Type(() => ReviewStatus)
@@ -231,6 +233,7 @@ export class ReviewItem implements ReviewItemInterface {
     ) {
         this.status = status;
         this.product = product;
+        this.createAndSetBlankModels();
     }
 
     public set models(models: Map<number, ReviewModel>) {
@@ -239,20 +242,27 @@ export class ReviewItem implements ReviewItemInterface {
         }
         this._models = models;
     }
+
+    @Expose()
+    @Type(() => ReviewModel)
     public get models(): Map<number, ReviewModel> {
-        if (this._models.size !== this.numberOfModels) return this.createAndSetNewModels();
+        if (this._models.size !== this.numberOfModels) return this.createAndSetBlankModels();
         return this._models;
     }
 
-    protected createAndSetNewModels(): Map<number, ReviewModel> {
-        this.models = new Map<number, ReviewModel>();
+    protected createAndSetBlankModels(): Map<number, ReviewModel> {
+        this.models = this.createBlankModels();
+        return this.models;
+    }
+    protected createBlankModels(): Map<number, ReviewModel> {
+        let models = new Map<number, ReviewModel>();
         for (let modelIndex: number = 1; modelIndex <= this.numberOfModels; modelIndex++) {
-            this.models.set(
+            models.set(
                 modelIndex,
                 new ReviewModel(modelIndex, this)
             );
         }
-        return this.models;
+        return models;
     }
 
     public get frameDictionary(): FrameDictionary {
@@ -260,18 +270,25 @@ export class ReviewItem implements ReviewItemInterface {
     }
 }
 
-export class ReviewModel implements ReviewModelInterface{
+export class ReviewModel implements ReviewModelInterface {
+
+    @Exclude()
     protected _framedPages: Map<string, FramedPage> = new Map();
+
+    @Exclude()
     protected _frameDictionary?: FrameDictionary;
 
-    @Expose()
-    public readonly modelIndexInReviewItem: number;
+    @Exclude()
+    public reviewItem: ReviewItem;
+
     constructor(
-        modelIndexInReviewItem: number,
-        public readonly reviewItem: ReviewItem
+        public readonly modelIndexInReviewItem: number,
+        reviewItem: ReviewItem
     ) {
-        this.modelIndexInReviewItem = modelIndexInReviewItem;
+        this.reviewItem = reviewItem;
+        this.createAndSetBlankFramedPages();
     }
+
     public getFrame(index: string): Frame | undefined {
         return this.frameDictionary.getFrame(index);
     }
@@ -279,7 +296,7 @@ export class ReviewModel implements ReviewModelInterface{
     @Expose()
     @Type(() => FramedPage)
     public get framedPages(): Map<string, FramedPage> {
-        if (this._framedPages.size !== this.numberOfFramedPages) return this.createAndSetNewFramedPages();
+        if (this._framedPages.size !== this.numberOfFramedPages) return this.createAndSetBlankFramedPages();
         return this._framedPages;
     }
 
@@ -291,11 +308,16 @@ export class ReviewModel implements ReviewModelInterface{
         if (framedPages.size !== this.numberOfFramedPages) throw new Error("map size inconsistent");
         this._framedPages = framedPages;
     }
-    protected createAndSetNewFramedPages(): Map<string, FramedPage> {
-        this._framedPages = new Map();
+    protected createAndSetBlankFramedPages(): Map<string, FramedPage> {
+        this.framedPages = this.createBlankFramedPages();
+        return this.framedPages;
+    }
+
+    protected createBlankFramedPages(): Map<string, FramedPage> {
+        let framedPages = new Map();
         let frameIndices = this.frameIndices;
         for (const frameIndex of frameIndices) {
-            this._framedPages.set(
+            framedPages.set(
                 frameIndex,
                 new FramedPage(
                     frameIndex,
@@ -303,12 +325,12 @@ export class ReviewModel implements ReviewModelInterface{
                 )
             )
         }
-        return this._framedPages;
+        return framedPages;
     }
-    public get frameIndices(): Array<string> {
+    protected get frameIndices(): Array<string> {
         return this.frameDictionary.frameIndices;
     }
-    public get frameDictionary(): FrameDictionary {
+    protected get frameDictionary(): FrameDictionary {
         if (!this._frameDictionary) return this.getAndSetFrameDictionary();
         return this._frameDictionary;
     }
@@ -319,16 +341,27 @@ export class ReviewModel implements ReviewModelInterface{
 }
 
 export class ReviewStatus implements ReviewStatusInterface {
+
+    @Type(() => UploadFileStatus)
+    public uploadFileStatuses: Array<UploadFileStatus>;
+
+    public progress: ReviewingProgress;
     constructor (
-        public uploadFileStatuses: Array<UploadFileStatus>,
-        public progress: ReviewingProgress
-    ) {}
+        uploadFileStatuses: Array<UploadFileStatus>,
+        progress: ReviewingProgress
+    ) {
+        this.uploadFileStatuses = uploadFileStatuses;
+        this.progress = progress;
+    }
 }
 
 export class FramedPage implements FramedPageInterface {   
     inputPagePreviewAddress?: string;
     printableResultingImageAddress?: string;
     printableResultingFileAddress?: string;
+
+    @Exclude()
+    private _rotationDegree: number;
 
     constructor (
         public readonly pageIndex: string,
@@ -337,8 +370,10 @@ export class FramedPage implements FramedPageInterface {
         public positionY: number = 0,
         public scaleX: number = 1,
         public scaleY: number = 1,
-        private _rotationDegree: number = 0
-    ) {}
+        _rotationDegree: number = 0
+    ) {
+        this._rotationDegree = _rotationDegree;
+    }
 
     public getFrame(): Frame | undefined {
       return this.reviewModel.getFrame(this.pageIndex);
@@ -402,6 +437,8 @@ export class UploadFileStatus implements UploadFileStatusInterface {
         public printablePagesAddress?: Array<string>,
         public errorStage?: UploadFileProcessingStage
     ) {}
+
+    @Expose()
     public get hasError(): boolean {
         if (this.errorStage) return true;
         return false;
