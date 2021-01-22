@@ -345,6 +345,7 @@ export class ReviewStatus implements ReviewStatusInterface {
     @Type(() => UploadFileStatus)
     public uploadFileStatuses: Array<UploadFileStatus>;
 
+    // TODO: enum? string literal? serializable?
     public progress: ReviewingProgress;
     constructor (
         uploadFileStatuses: Array<UploadFileStatus>,
@@ -363,15 +364,19 @@ export class FramedPage implements FramedPageInterface {
     @Exclude()
     private _rotationDegree: number;
 
+    @Exclude()
+    public readonly reviewModel: ReviewModel;
+
     constructor (
         public readonly pageIndex: string,
-        public readonly reviewModel: ReviewModel,  
+        reviewModel: ReviewModel,
         public positionX: number = 0,
         public positionY: number = 0,
         public scaleX: number = 1,
         public scaleY: number = 1,
         _rotationDegree: number = 0
     ) {
+        this.reviewModel = reviewModel;
         this._rotationDegree = _rotationDegree;
     }
 
