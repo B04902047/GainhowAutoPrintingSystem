@@ -24,8 +24,8 @@ export abstract class BookProduction implements Production {
     protected abstract coverShouldCoat(): boolean;
     
 
-    protected validPaperTextureForInnerPages: Array<Product.Paper>;  //不要lazy innt? => 使用者拉開下拉選單的時候會等待一下才有東西，使用體驗不好? 但是先init的話，不知道要取得的時候，資料已經回來了沒有
-    protected validPaperTextureForCover: Array<Product.Paper>;
+    protected validPaperTextureForInnerPages: Array<Product.Paper> = [];  //不要lazy innt? => 使用者拉開下拉選單的時候會等待一下才有東西，使用體驗不好? 但是先init的話，不知道要取得的時候，資料已經回來了沒有
+    protected validPaperTextureForCover: Array<Product.Paper> = [];
     
     // 待討論
     public async getValidPaperTexturesForInnerPages(): Promise<Array<Product.Paper>> {
