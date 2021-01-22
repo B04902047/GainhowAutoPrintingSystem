@@ -2,15 +2,23 @@
 import * as Production from "./Production";
 import * as Pricing from "./Pricing";
 import * as Review from "./Review";
+import { Exclude, Expose, Type } from "class-transformer";
+import { BookInterface, BookSubtypeName, CoatInterface, PaperInterface, PaperMaterialInterface, ProductInterface, ProductSubtypeName, PRODUCT_SUBTYPES, SaddleStichBindingBookInterface, SingleSheetInterface } from "./Interfaces";
 
-export abstract class Product {
+export const PRODUCT_TYPE_DISCRIMINATOR = {
+    property: '__productSubType',
+    subTypes: PRODUCT_SUBTYPES
+};
+
+export abstract class Product implements ProductInterface {
+    readonly abstract __productSubType: ProductSubtypeName;
     protected abstract priceCalculator?: Pricing.PriceCalculator;
     protected abstract production?: Production.Production;
-    protected abstract frameDictionary?: Review.FrameDictionary;
+    protected abstract _frameDictionary?: Review.FrameDictionary;
     public loadPrice(): Promise<number> {
         return this.getOrCreatePriceCalculator().loadPrice();
     };
-    public getFrameDictionary(): Review.FrameDictionary {
+    public get frameDictionary(): Review.FrameDictionary {
         return this.getOrCreateFrameDictionary();
     }
     public isProducible(): boolean {
@@ -29,8 +37,8 @@ export abstract class Product {
         return this.production;
     }
     protected getOrCreateFrameDictionary(): Review.FrameDictionary {
-        if(!this.frameDictionary) return this.createAndSetFrameDictionary();
-        return this.frameDictionary;
+        if(!this._frameDictionary) return this.createAndSetFrameDictionary();
+        return this._frameDictionary;
     }
     private createAndSetPriceCalculator(): Pricing.PriceCalculator {
         this.priceCalculator = this.createPriceCalculator(); 
@@ -41,17 +49,18 @@ export abstract class Product {
         return this.production; 
     }
     private createAndSetFrameDictionary(): Review.FrameDictionary {
-        this.frameDictionary = this.createFrameDictionary();
-        return this.frameDictionary;
+        this._frameDictionary = this.createFrameDictionary();
+        return this._frameDictionary;
     }
     protected abstract createPriceCalculator(): Pricing.PriceCalculator;
     protected abstract createProduction(): Production.Production;
     protected abstract createFrameDictionary(): Review.FrameDictionary;
 }
 
-export class SingleSheet extends Product {
+export class SingleSheet extends Product implements SingleSheetInterface {
+    readonly __productSubType: "SingleSheet" = "SingleSheet";
     protected production?: Production.SingleSheetProduction;    
-    protected frameDictionary?: Review.SingleSheetFrameDictionary;
+    protected _frameDictionary?: Review.SingleSheetFrameDictionary;
     protected createProduction(): Production.Production {
         throw new Error("Method not implemented.");
     }
@@ -63,26 +72,47 @@ export class SingleSheet extends Product {
         return new Pricing.SingleSheetHardCodeConfiguratedPriceCalculator(this);
     }
 
+    @Exclude()
     private frontSide: Page;
+
+    @Exclude()
     private backSide?: Page;
+
+    public width: number;
+    public height: number;
+    private _isDoubleSided: boolean;
+    public paper: Paper;
+
+    @Type(() => Coat)
+    public frontSideCoat?: Coat;
+
+    @Type(() => Coat)
+    public backSideCoat?: Coat;
+
     constructor(
-        public width: number,
-        public height: number,
-        private isDoubleSided: boolean,
-        public paperTexture: Paper,
-        public frontSideCoat?: Coat,
-        public backSideCoat?: Coat
+        width: number,
+        height: number,
+        isDoubleSided: boolean,
+        paperTexture: Paper,
+        frontSideCoat?: Coat,
+        backSideCoat?: Coat
     ) {
         super();
+        this.width = width;
+        this.height = height;
+        this._isDoubleSided = isDoubleSided;
+        this.paper = paperTexture;
+        this.frontSideCoat = frontSideCoat;
+        this.backSideCoat = backSideCoat;
         this.frontSide = new Page();
-        if (this.isDoubleSided) this.backSide = new Page();
+        if (this._isDoubleSided) this.backSide = new Page();
     }
-    public getIsDoubleSided(): boolean {
-        return this.isDoubleSided;
+    public get isDoubleSided(): boolean {
+        return this._isDoubleSided;
     }
-    public setIsDoubleSided(isDoubleSided: boolean): void {
-        let hasChanged: boolean = (this.isDoubleSided !== isDoubleSided);
-        this.isDoubleSided = isDoubleSided;
+    public set isDoubleSided(isDoubleSided: boolean) {
+        let hasChanged: boolean = (this._isDoubleSided !== isDoubleSided);
+        this._isDoubleSided = isDoubleSided;
         if (hasChanged) {
             if (isDoubleSided) {
                 this.backSide = new Page();
@@ -98,7 +128,7 @@ class Page {
 }
 
 
-export class Paper {
+export class Paper implements PaperInterface {
     constructor(
         readonly material: PaperMaterial,
         readonly thickness: number,
@@ -107,21 +137,22 @@ export class Paper {
     ) {}
 }
 
-export class PaperMaterial {
+export class PaperMaterial implements PaperMaterialInterface {
     constructor(
         readonly name: string,
         readonly aliases: Array<string>
     ) {}
 }
 
-export class Coat {
+export class Coat implements CoatInterface {
     constructor (
         readonly name: string,
         readonly chineseName: string
     ) {}
 }
 
-export abstract class Book extends Product {
+export abstract class Book extends Product implements BookInterface {
+    readonly abstract __productSubType: BookSubtypeName
     protected abstract readonly cover: BookCover;
     protected abstract production?: Production.BookProduction;
     protected innerPages : {
@@ -164,10 +195,12 @@ class SaddleStichBindingBookCover extends BookCover {
 
 }
 
-export class SaddleStichBindingBook extends Book {
-
+export class SaddleStichBindingBook extends Book implements SaddleStichBindingBookInterface {
+    readonly __productSubType: "SaddleStichBindingBook" = "SaddleStichBindingBook";
     protected production?: Production.SaddleStichBingingBookProduction;
-    protected frameDictionary?: Review.SaddleStichBindindBookFrameDictionary;
+    protected _frameDictionary?: Review.SaddleStichBindindBookFrameDictionary;
+    bindingStyle = Production.SaddleStichBinding.getInstance();
+    cover = new SaddleStichBindingBookCover();
     constructor(
         coverWidth: number, 
         coverHeight: number, 
@@ -199,6 +232,4 @@ export class SaddleStichBindingBook extends Book {
         return new Pricing.SaddleStichBindingBookSingletonRequestConfiguratedPriceCalculator(this);
     }
     
-    bindingStyle = Production.SaddleStichBinding.getInstance();
-    cover = new SaddleStichBindingBookCover();
 }

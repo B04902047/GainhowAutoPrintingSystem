@@ -1,4 +1,7 @@
 import * as Product from "./Product"
+import { Expose, plainToClass, Transform, Type } from 'class-transformer';
+import { FramedPageInterface, ReviewingProgress, ReviewItemInterface, ReviewModelInterface, ReviewStatusInterface, UploadFileProcessingStage, UploadFileStatusInterface } from "./Interfaces";
+
 
 export abstract class FrameDictionary {
     private frames: Map<string, Frame>;
@@ -7,7 +10,7 @@ export abstract class FrameDictionary {
         ) {
             this.frames = this.createFrames();
     }
-    public getFrameIndices(): Array<string> {
+    public get frameIndices(): Array<string> {
         return Object.keys(this.frames);
     }
     public getFrame(frameIndex: string): Frame | undefined {
@@ -157,7 +160,7 @@ export class SingleSheetFrameDictionary extends FrameDictionary {
         );
         let frames = new Map<string, RectangleFrame>();
         frames.set("frontSide", frame);
-        if (this.product.getIsDoubleSided()) {
+        if (this.product.isDoubleSided) {
             frames.set("backSide", frame);
         }
         return frames;
@@ -189,35 +192,59 @@ export class SaddleStichBindindBookFrameDictionary extends BookFrameDictionary {
     }
 }
 class ButterflyBindingBookFrameDictionary extends BookFrameDictionary {
-
+    protected createBookCoverFrame(): BookCoverFrame {
+        throw new Error("Method not implemented.");
+    }
+    protected createInnerPageFramePrototype(): BleededRectangleFrame {
+        throw new Error("Method not implemented.");
+    }
 }
 class PerfectBindingBookFrameDictionary extends BookFrameDictionary {
+    protected createBookCoverFrame(): BookCoverFrame {
+        throw new Error("Method not implemented.");
+    }
+    protected createInnerPageFramePrototype(): BleededRectangleFrame {
+        throw new Error("Method not implemented.");
+    }
 }
 
 export class ReviewRegistrationInfo {
 }
 
 
-export class ReviewItem {
-    protected models: Map<number, ReviewModel> = new Map();
+export class ReviewItem implements ReviewItemInterface {
+    protected _models: Map<number, ReviewModel> = new Map();
+
+    @Type(() => ReviewStatus)
+    public readonly status: ReviewStatus;
+
+    @Type(() => Product.Product, {
+        discriminator: Product.PRODUCT_TYPE_DISCRIMINATOR
+    })
+    public readonly product: Product.Product;
+    
     constructor(
         public readonly reviewId: string,
         public readonly numberOfModels: number,
-        public readonly status: ReviewStatus,
-        public readonly product: Product.Product, 
-    ) {}
-
-    public setModels(models: Map<number, ReviewModel>): boolean {
-        if (models.size !== this.numberOfModels) return false;
-        this.models = models;
-        return true;
-    }
-    public getModels(): Map<number, ReviewModel> {
-        if (this.models.size !== this.numberOfModels) return this.createAndSetNewModels();
-        return this.models;
+        status: ReviewStatus,
+        product: Product.Product, 
+    ) {
+        this.status = status;
+        this.product = product;
     }
 
-    public createAndSetNewModels(): Map<number, ReviewModel> {
+    public set models(models: Map<number, ReviewModel>) {
+        if (models.size !== this.numberOfModels) {
+            throw new Error(`number of models inconsistent: should be ${this.numberOfModels}, but has ${models.size}`);
+        }
+        this._models = models;
+    }
+    public get models(): Map<number, ReviewModel> {
+        if (this._models.size !== this.numberOfModels) return this.createAndSetNewModels();
+        return this._models;
+    }
+
+    protected createAndSetNewModels(): Map<number, ReviewModel> {
         this.models = new Map<number, ReviewModel>();
         for (let modelIndex: number = 1; modelIndex <= this.numberOfModels; modelIndex++) {
             this.models.set(
@@ -228,38 +255,47 @@ export class ReviewItem {
         return this.models;
     }
 
-    public getFrameDictionary(): FrameDictionary {
-        return this.product.getFrameDictionary();
+    public get frameDictionary(): FrameDictionary {
+        return this.product.frameDictionary;
     }
 }
 
-export class ReviewModel {
-    protected framedPages: Map<string, FramedPage> = new Map();
-    protected frameDictionary?: FrameDictionary;
+export class ReviewModel implements ReviewModelInterface{
+    protected _framedPages: Map<string, FramedPage> = new Map();
+    protected _frameDictionary?: FrameDictionary;
+
+    @Expose()
+    public readonly modelIndexInReviewItem: number;
     constructor(
-        public readonly modelIndexInReviewItem: number,
+        modelIndexInReviewItem: number,
         public readonly reviewItem: ReviewItem
-    ) {}
+    ) {
+        this.modelIndexInReviewItem = modelIndexInReviewItem;
+    }
     public getFrame(index: string): Frame | undefined {
-        return this.getFrameDictionary().getFrame(index);
+        return this.frameDictionary.getFrame(index);
     }
-    public getFramedPages(): Map<string, FramedPage> {
-        if (this.framedPages.size !== this.getNumberOfFramedPages()) return this.createAndSetNewFramedPages();
-        return this.framedPages;
+
+    @Expose()
+    @Type(() => FramedPage)
+    public get framedPages(): Map<string, FramedPage> {
+        if (this._framedPages.size !== this.numberOfFramedPages) return this.createAndSetNewFramedPages();
+        return this._framedPages;
     }
-    public getNumberOfFramedPages(): number {
-        return this.getFrameIndices().length;
+
+    @Expose({toPlainOnly: true})
+    public get numberOfFramedPages(): number {
+        return this.frameIndices.length;
     }
-    public setFramedPages(framedPages: Map<string, FramedPage>): boolean {
-        if (framedPages.size !== this.getNumberOfFramedPages()) return false;
-        this.framedPages = framedPages;
-        return true;
+    public set framedPages(framedPages: Map<string, FramedPage>) {
+        if (framedPages.size !== this.numberOfFramedPages) throw new Error("map size inconsistent");
+        this._framedPages = framedPages;
     }
-    public createAndSetNewFramedPages(): Map<string, FramedPage> {
-        this.framedPages = new Map();
-        let frameIndices = this.getFrameIndices();
+    protected createAndSetNewFramedPages(): Map<string, FramedPage> {
+        this._framedPages = new Map();
+        let frameIndices = this.frameIndices;
         for (const frameIndex of frameIndices) {
-            this.framedPages.set(
+            this._framedPages.set(
                 frameIndex,
                 new FramedPage(
                     frameIndex,
@@ -267,43 +303,41 @@ export class ReviewModel {
                 )
             )
         }
-        return this.framedPages;
+        return this._framedPages;
     }
-    public getFrameIndices(): Array<string> {
-        return this.getFrameDictionary().getFrameIndices();
+    public get frameIndices(): Array<string> {
+        return this.frameDictionary.frameIndices;
     }
-    public getFrameDictionary(): FrameDictionary {
-        if (!this.frameDictionary) return this.getAndSetFrameDictionary();
-        return this.frameDictionary;
+    public get frameDictionary(): FrameDictionary {
+        if (!this._frameDictionary) return this.getAndSetFrameDictionary();
+        return this._frameDictionary;
     }
     protected getAndSetFrameDictionary(): FrameDictionary {
-        this.frameDictionary = this.reviewItem.getFrameDictionary();
-        return this.frameDictionary;
+        this._frameDictionary = this.reviewItem.frameDictionary;
+        return this._frameDictionary;
     }
 }
 
-export class ReviewStatus {
+export class ReviewStatus implements ReviewStatusInterface {
     constructor (
-        protected uploadFileStatuses: Array<UploadFileStatus>,
-        protected progress: ReviewingProgress
-    ) {
-        
-    }
+        public uploadFileStatuses: Array<UploadFileStatus>,
+        public progress: ReviewingProgress
+    ) {}
 }
 
-export class FramedPage {   
-    inputPagePreviewAddress: string;
+export class FramedPage implements FramedPageInterface {   
+    inputPagePreviewAddress?: string;
     printableResultingImageAddress?: string;
     printableResultingFileAddress?: string;
 
     constructor (
         public readonly pageIndex: string,
         public readonly reviewModel: ReviewModel,  
-        protected positionX: number = 0,
-        protected positionY: number = 0,
-        protected scaleX: number = 1,
-        protected scaleY: number = 1,
-        protected rotationDegree: number = 0
+        public positionX: number = 0,
+        public positionY: number = 0,
+        public scaleX: number = 1,
+        public scaleY: number = 1,
+        private _rotationDegree: number = 0
     ) {}
 
     public getFrame(): Frame | undefined {
@@ -318,11 +352,15 @@ export class FramedPage {
 
     // 旋轉
     public rotate(degree: number): void {
-        this.setRotationDegree(degree);
+        this.rotationDegree = degree;
     }
 
-    private setRotationDegree(degree: number) {
-        this.rotationDegree = degree;
+    @Expose()
+    public get rotationDegree(): number {
+        return this._rotationDegree;
+    }
+    public set rotationDegree(degree: number) {
+        this._rotationDegree = degree % 360;
     }
     // 縮放
     public scale(x: number, y: number): void {
@@ -353,39 +391,19 @@ export class FramedPage {
     // cleanFile? 空白頁? 選擇了頁是不是可以改選擇用空白頁 
 }
 
+export class UploadFileStatus implements UploadFileStatusInterface {
 
-export enum ReviewingProgress {
-    REGISTERED = '已登記審稿，但還沒開始上傳檔案',
-    UPLOADING = '已經開始上傳檔案，但還有檔案沒上傳完畢',
-    GENERATING_PREVIEW_PAGES = '所有檔案都上傳完畢，但還有檔案預覽圖在生成中',
-    WAITING_PRINTABLE_REVIEW = '預覽圖都生成完畢，但使用者還在確認排版',
-    GENERATING_PRINTABLE_REVIEWED_PAGES = '使用者已確認排版，但還有印刷檔在生成中',
-    WAITING_FOR_USER_CHECK = '印刷檔都生成完畢，但使用者還沒確認最終結果',
-    FINISHED = '使用者審稿完畢'
-}
-
-export enum UploadFileProcessingStage {
-    UPLOAD = '已登記上傳檔案，但檔案還沒上傳完',
-    GENERATING_PREVIEW_PAGES = '已收到上傳檔，但正在生成預覽圖',
-    GENERATING_PRINTABLE_PAGES = '已生成預覽圖，但PDF還沒好',
-    FINISHED = '處理完畢'
-}
-
-export class UploadFileStatus {
     constructor (
-        readonly fileName: string,        
-        protected currentStage: UploadFileProcessingStage,
-        protected numberOfPages?: number,
-        protected fileAddress?: string,
-        protected previewPagesAddress?: Array<string>,
-        protected printablePagesAddress?: Array<string>,
-        protected errorStage?: UploadFileProcessingStage
-    ) {
-
-    }
-    public hasError(): boolean {
+        readonly fileName: string,
+        public currentStage: UploadFileProcessingStage,
+        public numberOfPages?: number,
+        public fileAddress?: string,
+        public previewPagesAddress?: Array<string>,
+        public printablePagesAddress?: Array<string>,
+        public errorStage?: UploadFileProcessingStage
+    ) {}
+    public get hasError(): boolean {
         if (this.errorStage) return true;
         return false;
     }
 }
-
