@@ -88,7 +88,7 @@ export class SaddleStichBindingBookProduction extends BookProduction {
     public estimateSpineWidth(): number { return 0; }
     protected innerPageShouldCoat(): boolean { return false; }
     protected coverShouldCoat(): boolean { return true; }
-    protected static options: Promise<BookProductionOptions>
+    public static options: Promise<BookProductionOptions>
         = SingletonSaddleStichBindingBookProductionOptionsRequestor.getInstance().loadBookProductionOptions();
 }
 
@@ -107,6 +107,12 @@ class PerfectBinding extends BookBindingStyle {
 }
 
 export class SaddleStichBinding extends BookBindingStyle {
+    public numberOfInnerPagesIsBindable(numberOfInnerPages: number): boolean {
+        throw new Error('Method not implemented.');
+    }
+    public getDescriptionOfTheNumberOfInnerPageRestriction(): string {
+        throw new Error('Method not implemented.');
+    }
     private static instance: SaddleStichBinding = new SaddleStichBinding();
     private constructor() {
         super();

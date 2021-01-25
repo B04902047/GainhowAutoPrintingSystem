@@ -190,6 +190,10 @@ export interface ReviewStatusInterface {
     readonly progress: ReviewingProgress;
 }
 
+export interface ReviewRegistrationInfoInterface {
+    readonly numberOfModels: number;
+    readonly product: Product.Product;
+}
 /**
  * @enum
  */

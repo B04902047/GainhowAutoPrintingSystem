@@ -1,6 +1,6 @@
 import * as Product from "./Product"
 import { Exclude, Expose, plainToClass, Transform, Type } from 'class-transformer';
-import { FramedPageInterface, ReviewingProgress, ReviewItemInterface, ReviewModelInterface, ReviewStatusInterface, UploadFileProcessingStage, UploadFileStatusInterface } from "./Interfaces";
+import { FramedPageInterface, ReviewingProgress, ReviewItemInterface, ReviewModelInterface, ReviewRegistrationInfoInterface, ReviewStatusInterface, UploadFileProcessingStage, UploadFileStatusInterface } from "./Interfaces";
 
 
 export abstract class FrameDictionary {
@@ -206,7 +206,14 @@ class PerfectBindingBookFrameDictionary extends BookFrameDictionary {
     }
 }
 
-export class ReviewRegistrationInfo {
+export class ReviewRegistrationInfo implements ReviewRegistrationInfoInterface{
+    constructor (
+        public readonly numberOfModels: number,
+        public readonly product: Product.Product,
+    ) {
+
+    }
+    
 }
 
 
