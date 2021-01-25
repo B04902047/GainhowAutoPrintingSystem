@@ -72,13 +72,16 @@ abstract class ShoppingCartItem {
      * 
      * ! 回傳值需要修改/再想想，可能是統一規定的一種通訊type
      */
-    public abstract registerItemToReviewAndSetReviewId(): Promise<boolean>;
+    public abstract registerForReviewAndSetReviewId(): Promise<string>;
     public hasRegieseredForReview(): boolean {
         if (this.reviewId) return true;
         return false;
     }
     private toReviewRegistrationInfo(): Review.ReviewRegistrationInfo {
-
+        return new Review.ReviewRegistrationInfo(
+            this.numberOfModels,
+            this.product
+        );
     }
 
 }
