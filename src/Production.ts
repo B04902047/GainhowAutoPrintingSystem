@@ -12,11 +12,10 @@ export class SingleSheetProduction implements Production {
 
 class BookProductionOptions {
     constructor(
-        protected validPaperTextureForInnerPages: Array<Product.Paper>,
-        protected validPaperTextureForCover: Array<Product.Paper>
+        readonly validPaperTextureForInnerPages: Array<Product.Paper>,
+        readonly validPaperTextureForCover: Array<Product.Paper>
     ) {}
 }
-
 
 abstract class SingletonBookProductionOptionsRequestor {
     /**
@@ -84,7 +83,7 @@ class SingletonSaddleStichBindingBookProductionOptionsRequestor extends Singleto
     }
 }
 
-export class SaddleStichBingingBookProduction extends BookProduction {
+export class SaddleStichBindingBookProduction extends BookProduction {
     readonly bindingStyle: SaddleStichBinding = SaddleStichBinding.getInstance();
     public estimateSpineWidth(): number { return 0; }
     protected innerPageShouldCoat(): boolean { return false; }
@@ -94,6 +93,7 @@ export class SaddleStichBingingBookProduction extends BookProduction {
 }
 
 export abstract class BookBindingStyle {
+    // TODO:? 厚度會不會影響內頁？會的話要新增「厚度」參數
     public abstract numberOfInnerPagesIsBindable(numberOfInnerPages: number): boolean;
     public abstract getDescriptionOfTheNumberOfInnerPageRestriction(): string;
 }
@@ -103,7 +103,7 @@ class ButterflyBinding extends BookBindingStyle {
 }
 
 class PerfectBinding extends BookBindingStyle {
-    
+
 }
 
 export class SaddleStichBinding extends BookBindingStyle {

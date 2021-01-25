@@ -34,11 +34,18 @@ export const BOOK_SUBTYPE_NAMES = [
 ] as const;
 export type BookSubtypeName = typeof BOOK_SUBTYPE_NAMES[number];
 
+export const BOOK_PAGING_DIRECTIONS = [
+    "LEFT_TO_RIGHT",
+    "RIGHT_TO_LEFT"
+] as const;
+export type BookPagingDirection = typeof BOOK_PAGING_DIRECTIONS[number];
+
 export interface BookInterface extends ProductInterface {
     readonly __productSubType: BookSubtypeName;
     readonly coverWidth: number;
     readonly coverHeight: number;
     readonly numberOfPages: number;
+    readonly pagingDirection: BookPagingDirection;
     readonly coverPaperTexture: PaperInterface;
     readonly innerPagesPaperTexture: PaperInterface;
     readonly coverCoating?: CoatInterface;

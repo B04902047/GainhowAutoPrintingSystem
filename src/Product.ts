@@ -2,6 +2,7 @@
 import * as Production from "./Production";
 import * as Pricing from "./Pricing";
 import * as Review from "./Review";
+import * as Interfaces from "./Interfaces";
 import { Exclude, Expose, Type } from "class-transformer";
 import { BookInterface, BookSubtypeName, CoatInterface, PaperInterface, PaperMaterialInterface, ProductInterface, ProductSubtypeName, PRODUCT_SUBTYPES, SaddleStichBindingBookInterface, SingleSheetInterface } from "./Interfaces";
 
@@ -26,7 +27,7 @@ export abstract class Product implements ProductInterface {
         let production: Production.Production = this.getOrCreateProduction();
         return production.isProducible();
     }
-    // TODO: 把production 要給人使用的method包裝成一個public的method
+    // TODO: 要不要把production 要給人使用的method包裝成一個public的method？
     public get production(): Production.Production {
         return this.getOrCreateProduction();
     }
@@ -161,6 +162,9 @@ export abstract class Book extends Product implements BookInterface {
     protected innerPages : {
         [pageIndex: number]: Page
     } = {};
+    public get production(): Production.BookProduction {
+        return this.getOrCreateProduction() as Production.BookProduction;
+    }
     public getBindingStyle(): Production.BookBindingStyle {
         return (this.getOrCreateProduction() as Production.BookProduction).bindingStyle;
     };
@@ -171,6 +175,7 @@ export abstract class Book extends Product implements BookInterface {
         public coverWidth: number,
         public coverHeight: number,
         public numberOfPages: number,
+        public pagingDirection: Interfaces.BookPagingDirection,
         public coverPaperTexture: Paper,
         public innerPagesPaperTexture: Paper,
         public coverCoating?: Coat,
@@ -188,12 +193,6 @@ export abstract class Book extends Product implements BookInterface {
         }
         return this.innerPages;
     }
-    public async loadValidPaperTexturesForInnerPages(): Promise<Array<Paper>> {
-        return (this.getOrCreateProduction() as Production.BookProduction).loadValidPaperTexturesForInnerPages();
-    }
-    public async loadValidPaperTexturesForCover(): Promise<Array<Paper>> {
-        return (this.getOrCreateProduction() as Production.BookProduction).loadValidPaperTexturesForCover();
-    }
 }
 
 abstract class BookCover {
@@ -206,14 +205,15 @@ class SaddleStichBindingBookCover extends BookCover {
 
 export class SaddleStichBindingBook extends Book implements SaddleStichBindingBookInterface {
     readonly __productSubType: "SaddleStichBindingBook" = "SaddleStichBindingBook";
-    protected _production?: Production.SaddleStichBingingBookProduction;
+    protected _production?: Production.SaddleStichBindingBookProduction;
     protected _frameDictionary?: Review.SaddleStichBindindBookFrameDictionary;
     bindingStyle = Production.SaddleStichBinding.getInstance();
     cover = new SaddleStichBindingBookCover();
     constructor(
         coverWidth: number, 
         coverHeight: number, 
-        numberOfPages: number, 
+        numberOfPages: number,
+        pagingDirection: Interfaces.BookPagingDirection,
         coverPaperTexture: Paper,
         innerPagesPaperTexture: Paper, 
         coverCoating?: Coat, 
@@ -222,16 +222,20 @@ export class SaddleStichBindingBook extends Book implements SaddleStichBindingBo
         super(
             coverWidth, 
             coverHeight, 
-            numberOfPages, 
+            numberOfPages,
+            pagingDirection,
             coverPaperTexture, 
             innerPagesPaperTexture, 
             coverCoating, 
             innerPageCoating
         );
     }
-    
-    protected createProduction(): Production.SaddleStichBingingBookProduction {
-        return new Production.SaddleStichBingingBookProduction(this);
+    public get production(): Production.SaddleStichBindingBookProduction {
+        return this.getOrCreateProduction() as Production.SaddleStichBindingBookProduction;
+        // TODO: rewrite createAndSetProduction() in concrete products
+    }
+    protected createProduction(): Production.SaddleStichBindingBookProduction {
+        return new Production.SaddleStichBindingBookProduction(this);
     }
     protected createFrameDictionary(): Review.FrameDictionary {
         return new Review.SaddleStichBindindBookFrameDictionary(this);

@@ -36,7 +36,6 @@ export abstract class Frame {
     protected abstract createCutLines(): Array<Line>;
 }
 
-
 export class Line {
     constructor(
         readonly startX: number,
@@ -109,8 +108,8 @@ abstract class BookCoverFrame extends BleededRectangleFrame {
         );
     }
     protected abstract createFoldLines(): Line[];
-
 }
+
 abstract class BookFrameDictionary extends FrameDictionary {
     protected coverFrame: BookCoverFrame;
     protected innerPageFrames: Map<string, RectangleFrame>;
@@ -165,9 +164,8 @@ export class SingleSheetFrameDictionary extends FrameDictionary {
         }
         return frames;
     }
-    
-
 }
+
 export class SaddleStichBindindBookFrameDictionary extends BookFrameDictionary {
     private static readonly INNER_PAGE_CUT_ERROR = 3;
     private static readonly COVER_CUT_ERROR = 3;
