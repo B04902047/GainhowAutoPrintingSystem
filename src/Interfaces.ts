@@ -1,6 +1,25 @@
 
 import * as Product from "./Product";
 
+/** ============ 通訊錯誤 ============ */
+export interface TransactionErrorInterface extends Error {
+    failureType: FailureType;
+}
+
+export enum FailureType {
+    CONNECTION_FAILURE = "連線錯誤",
+    PRECONDITION_FAILURE = "前置條件不符",
+    POSTCONDITION_FAILURE = "後置條件無法完成",
+    UNDEFINED_FAILURE = "未能歸類為以上三種"
+}
+
+export interface TransactionResponse<T> {
+    isFinished: boolean;
+    error?: TransactionErrorInterface;
+    data: T;
+}
+
+/** ============ 產品分類 ============ */
 /**
  * @enum
  */
@@ -64,6 +83,17 @@ export interface PerfectBindingBookInterface extends BookInterface {
     readonly __productSubType: "PerfectBindingBook";
 }
 
+export interface SingleSheetInterface extends ProductInterface  {
+    readonly __productSubType: "SingleSheet";
+    readonly width: number,
+    readonly height: number,
+    readonly isDoubleSided: boolean,
+    readonly paper: PaperInterface,
+    readonly frontSideCoat?: CoatInterface,
+    readonly backSideCoat?: CoatInterface
+}
+
+/** ============ 產品組成 ============ */
 
 export interface PaperInterface {
     readonly material: PaperMaterialInterface,
@@ -82,15 +112,70 @@ export interface CoatInterface {
     readonly chineseName: string;
 }
 
-export interface SingleSheetInterface extends ProductInterface  {
-    readonly __productSubType: "SingleSheet";
-    readonly width: number,
-    readonly height: number,
-    readonly isDoubleSided: boolean,
-    readonly paper: PaperInterface,
-    readonly frontSideCoat?: CoatInterface,
-    readonly backSideCoat?: CoatInterface
+/** ============ 計價參數 ============ */
+
+export interface ComponentPricingConfigInterface {
+    unitPrice: number;
+    unit: string;
 }
+
+export interface SingleSheetPricingConfigInterface {
+    readonly coating: Array<CoatingPricingConfigInterface>;
+    readonly printing: PrintingPricingConfigInterface;
+    readonly paper: Array<PaperPricingConfigInterface>;
+}
+
+export interface BookPricingConfigInterface {
+    readonly coating: Array<CoatingPricingConfigInterface>;
+    readonly printing: PrintingPricingConfigInterface;
+    readonly binding: Array<BookBindingPricingConfigInterface>;
+    readonly paper: Array<PaperPricingConfigInterface>;
+}
+
+export interface PaperPricingConfigInterface extends ComponentPricingConfigInterface {
+    unit: "Meter" | "SquareMeter"   // 以「一公尺／一平方公尺」為單位
+    paper: PaperInterface;
+}
+
+export interface CoatingPricingConfigInterface extends ComponentPricingConfigInterface {
+    unit: "Page" | "SquareMeter"    // 以「一面／一平方公尺」為單位
+    coat: CoatInterface;
+}
+
+export interface PrintingPricingConfigInterface extends ComponentPricingConfigInterface {
+    unit: "Meter" | "SquareMeter"   // 以「一公尺／一平方公尺」為單位
+}
+
+export const BINDING_OPTIONS = [
+    "SaddleStichBinding",
+    "ButterflyBinding",
+    "PerfectBinding"
+] as const;
+export type BindingOption = typeof BINDING_OPTIONS[number];
+
+export interface BookBindingPricingConfigInterface extends ComponentPricingConfigInterface {
+    unit: "Copy";                   // 以「一份（一本書）」為單位
+    bindingStyle: BindingOption;
+}
+
+
+/** ============ 產品參數選項 ============ */
+
+export interface BookProductionOptionsInterface {
+    readonly validPaperTexturesForInnerPages: Array<PaperInterface>;
+    readonly validPaperTexturesForCover: Array<PaperInterface>;
+    readonly validCoatingStylesForInnerPages: Array<CoatInterface>;
+    readonly validCoatingStylesorCover: Array<CoatInterface>;
+}
+
+export interface SingleSheetProductionOptionsInterface {
+    readonly validPaperTextures: Array<PaperInterface>;
+    readonly validCoatingStyles: Array<PaperInterface>;
+}
+
+
+
+/** ============ 審稿 ============ */
 
 export interface ReviewItemInterface {
     readonly reviewId: string;
@@ -157,35 +242,4 @@ export interface FramedPageInterface {
     scaleX?: number;
     scaleY?: number;
     rotationDegree?: number;
-}
-
-export interface PricingConfigInterface {
-    unitPrice: number;
-    unit: string;
-}
-
-export interface PaperPricingConfigInterface extends PricingConfigInterface {
-    unit: "Meter" | "SquareMeter"   // 以「一公尺／一平方公尺」為單位
-    paper: PaperInterface;
-}
-
-export interface CoatingPricingConfigInterface extends PricingConfigInterface {
-    unit: "Page" | "SquareMeter"    // 以「一面／一平方公尺」為單位
-    coat: CoatInterface;
-}
-
-export interface PrintingPricingConfigInterface extends PricingConfigInterface {
-    unit: "Meter" | "SquareMeter"   // 以「一公尺／一平方公尺」為單位
-}
-
-export const BINDING_OPTIONS = [
-    "SaddleStichBinding",
-    "ButterflyBinding",
-    "PerfectBinding"
-] as const;
-export type BindingOption = typeof BINDING_OPTIONS[number];
-
-export interface BookBindingPricingConfigInterface extends PricingConfigInterface {
-    unit: "Copy";                   // 以「一份（一本書）」為單位
-    bindingStyle: BindingOption;
 }
