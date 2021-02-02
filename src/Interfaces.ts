@@ -20,23 +20,16 @@ export interface TransactionResponse<T> {
 }
 
 /** ============ 產品分類 ============ */
-/**
- * @enum
- */
-const PRODUCT_SUBTYPE_NAMES = [
-    "SingleSheet",
-    "SaddleStichBindingBook",
-    "ButterflyBindingBook",
-    "PerfectBindingBook"
-] as const;
 
-export type ProductSubtypeName = typeof PRODUCT_SUBTYPE_NAMES[number];
+export type ProductSubtypeName
+    = "SingleSheet"
+    | BookSubtypeName;
 
 export const PRODUCT_SUBTYPES: {
     name: ProductSubtypeName; value: any
 }[] = [
     { name : "SingleSheet", value: Product.SingleSheet },
-    { name : "SaddleStichBindingBook", value: Product.SaddleStichBindingBook },
+    { name : "SaddleStichedBook", value: Product.SaddleStichBindingBook },
 ];
 
 export interface ProductInterface {
@@ -47,15 +40,16 @@ export interface ProductInterface {
  * @enum
  */
 export const BOOK_SUBTYPE_NAMES = [
-    "SaddleStichBindingBook",
-    "ButterflyBindingBook",
-    "PerfectBindingBook"
+    "SaddleStichedBook",    // 騎馬釘
+    "PerfectBoundBook",     // 膠裝（純膠裝／穿線膠裝／方背精裝／圓背精裝／穿線方背精裝／穿線圓背精裝）
+    "EqualSoftcoverBook",   // 平裝
 ] as const;
 export type BookSubtypeName = typeof BOOK_SUBTYPE_NAMES[number];
 
 export const BOOK_PAGING_DIRECTIONS = [
-    "LEFT_TO_RIGHT",
-    "RIGHT_TO_LEFT"
+    "LEFT_TO_RIGHT",    // 直式由左往右翻
+    "RIGHT_TO_LEFT",    // 直式由右往左翻
+    "BOTTOM_TO_TOP"     // 橫式
 ] as const;
 export type BookPagingDirection = typeof BOOK_PAGING_DIRECTIONS[number];
 
@@ -71,16 +65,18 @@ export interface BookInterface extends ProductInterface {
     readonly innerPageCoating?: CoatInterface;
 }
 
-export interface SaddleStichBindingBookInterface extends BookInterface {
-    readonly __productSubType: "SaddleStichBindingBook";
+export interface SaddleStichedBook extends BookInterface {
+    readonly __productSubType: "SaddleStichedBook";
+}
+export interface PerfectBoundBook extends BookInterface {
+    readonly __productSubType: "PerfectBoundBook";
+    readonly hardCovered: boolean;      // 是否精裝（外加硬殼）
+    readonly threadSewn: boolean;       // 是否穿線
+    readonly spineStyle: "standard" | "rounded";
 }
 
-export interface ButterflyBindingBookInterface extends BookInterface {
-    readonly __productSubType: "ButterflyBindingBook";
-}
-
-export interface PerfectBindingBookInterface extends BookInterface {
-    readonly __productSubType: "PerfectBindingBook";
+export interface EqualSoftcoverBook extends BookInterface {
+    readonly __productSubType: "EqualSoftcoverBook";
 }
 
 export interface SingleSheetInterface extends ProductInterface  {
@@ -158,7 +154,6 @@ export interface BookBindingPricingConfigInterface extends ComponentPricingConfi
     bindingStyle: BindingOption;
 }
 
-
 /** ============ 產品參數選項 ============ */
 
 export interface BookProductionOptionsInterface {
@@ -174,7 +169,6 @@ export interface SingleSheetProductionOptionsInterface {
 }
 
 
-
 /** ============ 審稿 ============ */
 
 export interface ReviewItemInterface {
@@ -186,14 +180,15 @@ export interface ReviewItemInterface {
 }
 
 export interface ReviewStatusInterface {
-    readonly uploadFileStatuses: Array<UploadFileStatusInterface>;
+    readonly uploadFileStatuses: Map<string, UploadFileStatusInterface>;
     readonly progress: ReviewingProgress;
 }
 
 export interface ReviewRegistrationInfoInterface {
     readonly numberOfModels: number;
-    readonly product: Product.Product;
+    readonly product: ProductInterface;
 }
+
 /**
  * @enum
  */
