@@ -6,6 +6,7 @@ export interface TransactionErrorInterface extends Error {
     failureType: FailureType;
 }
 
+/** ============ 錯誤類型 ============ */
 export enum FailureType {
     CONNECTION_FAILURE = "連線錯誤",
     PRECONDITION_FAILURE = "前置條件不符",
@@ -13,6 +14,7 @@ export enum FailureType {
     UNDEFINED_FAILURE = "未能歸類為以上三種"
 }
 
+/** ============ 通訊格式 ============ */
 export interface TransactionResponse<T> {
     isFinished: boolean;
     error?: TransactionErrorInterface;
@@ -37,15 +39,18 @@ export interface ProductInterface {
 }
 
 /**
- * @enum
+ * 書籍
+ * @enum  
+ * 
  */
+// 總共有的所有書籍類別: 騎馬釘、蝴蝶書、膠裝書
 export const BOOK_SUBTYPE_NAMES = [
     "SaddleStichedBook",    // 騎馬釘
     "PerfectBoundBook",     // 膠裝（純膠裝／穿線膠裝／方背精裝／圓背精裝／穿線方背精裝／穿線圓背精裝）
     "EqualSoftcoverBook",   // 平裝
 ] as const;
 export type BookSubtypeName = typeof BOOK_SUBTYPE_NAMES[number];
-
+// 翻頁方式: 左翻與右翻
 export const BOOK_PAGING_DIRECTIONS = [
     "LEFT_TO_RIGHT",    // 直式由左往右翻
     "RIGHT_TO_LEFT",    // 直式由右往左翻
@@ -53,6 +58,7 @@ export const BOOK_PAGING_DIRECTIONS = [
 ] as const;
 export type BookPagingDirection = typeof BOOK_PAGING_DIRECTIONS[number];
 
+// 書籍參數
 export interface BookInterface extends ProductInterface {
     readonly __productSubType: BookSubtypeName;
     readonly coverWidth: number;
@@ -79,6 +85,11 @@ export interface EqualSoftcoverBook extends BookInterface {
     readonly __productSubType: "EqualSoftcoverBook";
 }
 
+
+/**
+ * 單張  
+ * 
+ */
 export interface SingleSheetInterface extends ProductInterface  {
     readonly __productSubType: "SingleSheet";
     readonly width: number,
@@ -90,19 +101,19 @@ export interface SingleSheetInterface extends ProductInterface  {
 }
 
 /** ============ 產品組成 ============ */
-
+// 紙張
 export interface PaperInterface {
     readonly material: PaperMaterialInterface,
     readonly thickness: number,
     readonly isSmooth: boolean, // 表面是否光滑（會影響能否上膜）
     readonly description: string
 }
-
+// 紙質
 export interface PaperMaterialInterface {
     readonly name: string;
     readonly aliases: Array<string>;
 }
-
+// 上模
 export interface CoatInterface {
     readonly name: string;
     readonly chineseName: string;
@@ -114,34 +125,34 @@ export interface ComponentPricingConfigInterface {
     unitPrice: number;
     unit: string;
 }
-
+// 單張計價參數
 export interface SingleSheetPricingConfigInterface {
     readonly coating: Array<CoatingPricingConfigInterface>;
     readonly printing: PrintingPricingConfigInterface;
     readonly paper: Array<PaperPricingConfigInterface>;
 }
-
+// 書籍計價參數
 export interface BookPricingConfigInterface {
     readonly coating: Array<CoatingPricingConfigInterface>;
     readonly printing: PrintingPricingConfigInterface;
     readonly binding: Array<BookBindingPricingConfigInterface>;
     readonly paper: Array<PaperPricingConfigInterface>;
 }
-
+// 紙材計價
 export interface PaperPricingConfigInterface extends ComponentPricingConfigInterface {
     unit: "Meter" | "SquareMeter"   // 以「一公尺／一平方公尺」為單位
     paper: PaperInterface;
 }
-
+// 上膜計價
 export interface CoatingPricingConfigInterface extends ComponentPricingConfigInterface {
     unit: "Page" | "SquareMeter"    // 以「一面／一平方公尺」為單位
     coat: CoatInterface;
 }
-
+// 印工計價
 export interface PrintingPricingConfigInterface extends ComponentPricingConfigInterface {
     unit: "Meter" | "SquareMeter"   // 以「一公尺／一平方公尺」為單位
 }
-
+// 裝訂方式
 export const BINDING_OPTIONS = [
     "SaddleStichBinding",
     "ButterflyBinding",
@@ -149,20 +160,21 @@ export const BINDING_OPTIONS = [
 ] as const;
 export type BindingOption = typeof BINDING_OPTIONS[number];
 
+// 裝訂計價
 export interface BookBindingPricingConfigInterface extends ComponentPricingConfigInterface {
     unit: "Copy";                   // 以「一份（一本書）」為單位
     bindingStyle: BindingOption;
 }
 
 /** ============ 產品參數選項 ============ */
-
+// 書籍可用選項:可用的紙質以及上膜
 export interface BookProductionOptionsInterface {
     readonly validPaperTexturesForInnerPages: Array<PaperInterface>;
     readonly validPaperTexturesForCover: Array<PaperInterface>;
     readonly validCoatingStylesForInnerPages: Array<CoatInterface>;
     readonly validCoatingStylesorCover: Array<CoatInterface>;
 }
-
+// 單張可用選項:可用的紙質以及上膜
 export interface SingleSheetProductionOptionsInterface {
     readonly validPaperTextures: Array<PaperInterface>;
     readonly validCoatingStyles: Array<PaperInterface>;
@@ -170,7 +182,7 @@ export interface SingleSheetProductionOptionsInterface {
 
 
 /** ============ 審稿 ============ */
-
+// 審稿資訊物件
 export interface ReviewItemInterface {
     readonly reviewId: string;
     readonly numberOfModels: number;
@@ -178,12 +190,12 @@ export interface ReviewItemInterface {
     readonly product: ProductInterface;
     readonly models: Map<number, ReviewModelInterface>;    
 }
-
+// 審稿狀態
 export interface ReviewStatusInterface {
     readonly uploadFileStatuses: Map<string, UploadFileStatusInterface>;
     readonly progress: ReviewingProgress;
 }
-
+// 登記審稿資訊
 export interface ReviewRegistrationInfoInterface {
     readonly numberOfModels: number;
     readonly product: ProductInterface;
@@ -192,6 +204,7 @@ export interface ReviewRegistrationInfoInterface {
 /**
  * @enum
  */
+// 審稿狀態
 export const REVIEWING_PROGRESS = [
     "REGISTERED", // '已登記審稿，但還沒開始上傳檔案',
     "UPLOADING", // '已經開始上傳檔案，但還有檔案沒上傳完畢',
@@ -206,6 +219,7 @@ export type ReviewingProgress = typeof REVIEWING_PROGRESS[number];
 /**
  * @enum
  */
+// 上傳檔案的狀態
 export const UPLOAD_FILE_PROCESSING_STAGES = [
     "UPLOAD",                     // 已登記上傳檔案，但檔案還沒上傳完
     "GENERATING_PREVIEW_PAGES",   // 已收到上傳檔，但正在生成預覽圖
@@ -214,7 +228,7 @@ export const UPLOAD_FILE_PROCESSING_STAGES = [
 ] as const;
 
 export type UploadFileProcessingStage = typeof UPLOAD_FILE_PROCESSING_STAGES[number];
-
+// 上傳檔案的資訊
 export interface UploadFileStatusInterface {
     readonly fileName: string;
     readonly currentStage: UploadFileProcessingStage;
@@ -225,12 +239,12 @@ export interface UploadFileStatusInterface {
     readonly printablePagesAddress?: Array<string>;
     readonly errorStage?: UploadFileProcessingStage;   
 }
-
+// 審稿頁與框的配對
 export interface ReviewModelInterface {
     readonly modelIndexInReviewItem: number;
     framedPages: Map<string, FramedPageInterface>;
 }
-
+// 審稿頁與框的資訊
 export interface FramedPageInterface {
     inputPagePreviewAddress?: string;
     printableResultingImageAddress?: string;
