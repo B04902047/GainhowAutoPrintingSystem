@@ -61,26 +61,36 @@ export type BookPagingDirection = typeof BOOK_PAGING_DIRECTIONS[number];
 // 書籍參數
 export interface BookInterface extends ProductInterface {
     readonly __productSubType: BookSubtypeName;
-    readonly coverWidth: number;
-    readonly coverHeight: number;
-    readonly numberOfPages: number;
-    readonly pagingDirection: BookPagingDirection;
-    readonly coverPaperTexture: PaperInterface;
-    readonly innerPagesPaperTexture: PaperInterface;
-    readonly coverCoating?: CoatInterface;
-    readonly innerPageCoating?: CoatInterface;
+    readonly coverWidth: number;                    // 成品寬
+    readonly coverHeight: number;                   // 成品高
+    readonly numberOfPages: number;                 // 總頁數
+    readonly pagingDirection: BookPagingDirection;  // 翻頁方向
+    readonly coverPaperTexture: PaperInterface;     // 封面紙張種類
+    readonly innerPagesPaperTexture: PaperInterface;// 內頁紙張種類
+    readonly coverCoating?: CoatInterface;          // 封面上膜
+    readonly innerPageCoating?: CoatInterface;      // 內頁上膜
 }
 
-export interface SaddleStichedBook extends BookInterface {
-    readonly __productSubType: "SaddleStichedBook";
-}
+/**
+ * 膠裝書
+ */
 export interface PerfectBoundBook extends BookInterface {
     readonly __productSubType: "PerfectBoundBook";
     readonly hardCovered: boolean;      // 是否精裝（外加硬殼）
     readonly threadSewn: boolean;       // 是否穿線
-    readonly spineStyle: "standard" | "rounded";
+    readonly spineStyle: "standard" | "rounded";    // 書背：方背／圓背
 }
 
+/**
+ * 騎馬釘書
+ */
+export interface SaddleStichedBook extends BookInterface {
+    readonly __productSubType: "SaddleStichedBook";
+}
+
+/**
+ * 平裝書
+ */
 export interface EqualSoftcoverBook extends BookInterface {
     readonly __productSubType: "EqualSoftcoverBook";
 }
@@ -101,14 +111,14 @@ export interface SingleSheetInterface extends ProductInterface  {
 }
 
 /** ============ 產品組成 ============ */
-// 紙張
+// 紙張種類
 export interface PaperInterface {
     readonly material: PaperMaterialInterface,
     readonly thickness: number,
     readonly isSmooth: boolean, // 表面是否光滑（會影響能否上膜）
     readonly description: string
 }
-// 紙質
+// 紙張材質
 export interface PaperMaterialInterface {
     readonly name: string;
     readonly aliases: Array<string>;
