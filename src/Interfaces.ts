@@ -61,26 +61,36 @@ export type BookPagingDirection = typeof BOOK_PAGING_DIRECTIONS[number];
 // 書籍參數
 export interface Book extends ProductInterface {
     readonly __productSubType: BookSubtypeName;
-    readonly coverWidth: number;
-    readonly coverHeight: number;
-    readonly numberOfPages: number;
-    readonly pagingDirection: BookPagingDirection;
-    readonly coverPaperTexture: Paper;
-    readonly innerPagesPaperTexture: Paper;
-    readonly coverCoating?: Coat;
-    readonly innerPageCoating?: Coat;
+    readonly coverWidth: number;                    // 成品寬
+    readonly coverHeight: number;                   // 成品高
+    readonly numberOfPages: number;                 // 總頁數
+    readonly pagingDirection: BookPagingDirection;  // 翻頁方向
+    readonly coverPaperTexture: Paper;              // 封面紙張種類
+    readonly innerPagesPaperTexture: Paper;         // 內頁紙張種類
+    readonly coverCoating?: Coat;                   // 封面上膜
+    readonly innerPageCoating?: Coat;               // 內頁上膜
 }
 
-export interface SaddleStichedBook extends Book {
-    readonly __productSubType: "SaddleStichedBook";
-}
+/**
+ * 膠裝書
+ */
 export interface PerfectBoundBook extends Book {
     readonly __productSubType: "PerfectBoundBook";
     readonly hardCovered: boolean;      // 是否精裝（外加硬殼）
     readonly threadSewn: boolean;       // 是否穿線
-    readonly spineStyle: "standard" | "rounded";
+    readonly spineStyle: "standard" | "rounded";    // 書背：方背／圓背
 }
 
+/**
+ * 騎馬釘書
+ */
+export interface SaddleStichedBook extends Book {
+    readonly __productSubType: "SaddleStichedBook";
+}
+
+/**
+ * 平裝書
+ */
 export interface EqualSoftcoverBook extends Book {
     readonly __productSubType: "EqualSoftcoverBook";
 }
