@@ -2,7 +2,7 @@
 import * as Interfaces from "./Interfaces";
 
 
-export class TransactionError extends Error implements Interfaces.TransactionErrorInterface {
+export class TransactionError extends Error implements Interfaces.TransactionError {
     constructor(
         readonly failureType: Interfaces.FailureType,
         message?: string

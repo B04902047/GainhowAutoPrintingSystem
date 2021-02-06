@@ -2,7 +2,7 @@
 import * as Product from "./Product";
 
 /** ============ 通訊錯誤 ============ */
-export interface TransactionErrorInterface extends Error {
+export interface TransactionError extends Error {
     failureType: FailureType;
 }
 
@@ -17,7 +17,7 @@ export enum FailureType {
 /** ============ 通訊格式 ============ */
 export interface TransactionResponse<T> {
     isFinished: boolean;
-    error?: TransactionErrorInterface;
+    error?: TransactionError;
     data: T;
 }
 
@@ -31,7 +31,7 @@ export const PRODUCT_SUBTYPES: {
     name: ProductSubtypeName; value: any
 }[] = [
     { name : "SingleSheet", value: Product.SingleSheet },
-    { name : "SaddleStichedBook", value: Product.SaddleStichBindingBook },
+    { name : "SaddleStichedBook", value: Product.SaddleStichedBook },
 ];
 
 export interface ProductInterface {
@@ -59,29 +59,29 @@ export const BOOK_PAGING_DIRECTIONS = [
 export type BookPagingDirection = typeof BOOK_PAGING_DIRECTIONS[number];
 
 // 書籍參數
-export interface BookInterface extends ProductInterface {
+export interface Book extends ProductInterface {
     readonly __productSubType: BookSubtypeName;
     readonly coverWidth: number;
     readonly coverHeight: number;
     readonly numberOfPages: number;
     readonly pagingDirection: BookPagingDirection;
-    readonly coverPaperTexture: PaperInterface;
-    readonly innerPagesPaperTexture: PaperInterface;
-    readonly coverCoating?: CoatInterface;
-    readonly innerPageCoating?: CoatInterface;
+    readonly coverPaperTexture: Paper;
+    readonly innerPagesPaperTexture: Paper;
+    readonly coverCoating?: Coat;
+    readonly innerPageCoating?: Coat;
 }
 
-export interface SaddleStichedBook extends BookInterface {
+export interface SaddleStichedBook extends Book {
     readonly __productSubType: "SaddleStichedBook";
 }
-export interface PerfectBoundBook extends BookInterface {
+export interface PerfectBoundBook extends Book {
     readonly __productSubType: "PerfectBoundBook";
     readonly hardCovered: boolean;      // 是否精裝（外加硬殼）
     readonly threadSewn: boolean;       // 是否穿線
     readonly spineStyle: "standard" | "rounded";
 }
 
-export interface EqualSoftcoverBook extends BookInterface {
+export interface EqualSoftcoverBook extends Book {
     readonly __productSubType: "EqualSoftcoverBook";
 }
 
@@ -90,66 +90,69 @@ export interface EqualSoftcoverBook extends BookInterface {
  * 單張  
  * 
  */
-export interface SingleSheetInterface extends ProductInterface  {
+export interface SingleSheet extends ProductInterface  {
     readonly __productSubType: "SingleSheet";
     readonly width: number,
     readonly height: number,
     readonly isDoubleSided: boolean,
-    readonly paper: PaperInterface,
-    readonly frontSideCoat?: CoatInterface,
-    readonly backSideCoat?: CoatInterface
+    readonly paper: Paper,
+    readonly frontSideCoat?: Coat,
+    readonly backSideCoat?: Coat
 }
 
 /** ============ 產品組成 ============ */
 // 紙張
-export interface PaperInterface {
-    readonly material: PaperMaterialInterface,
-    readonly thickness: number,
-    readonly isSmooth: boolean, // 表面是否光滑（會影響能否上膜）
-    readonly description: string
+export interface Paper {
+    name: string;
+    material: PaperMaterial;
+    thickness: number; // 厚度
+    weight: number;    // 單位面積重量
+    isSmooth: boolean; // 表面是否光滑（會影響能否上膜）
+    description?: string;
 }
+
 // 紙質
-export interface PaperMaterialInterface {
-    readonly name: string;
-    readonly aliases: Array<string>;
+export interface PaperMaterial {
+    name: string;
+    aliases?: Array<string>;
 }
 // 上模
-export interface CoatInterface {
+export interface Coat {
     readonly name: string;
     readonly chineseName: string;
 }
 
 /** ============ 計價參數 ============ */
 
-export interface ComponentPricingConfigInterface {
+export interface ComponentPricingConfig {
     unitPrice: number;
     unit: string;
 }
 // 單張計價參數
-export interface SingleSheetPricingConfigInterface {
-    readonly coating: Array<CoatingPricingConfigInterface>;
-    readonly printing: PrintingPricingConfigInterface;
-    readonly paper: Array<PaperPricingConfigInterface>;
+export interface SingleSheetPricingConfig {
+    readonly coating: Array<CoatingPricingConfig>;
+    readonly printing: PrintingPricingConfig;
+    readonly paper: Array<PaperPricingConfig>;
 }
 // 書籍計價參數
-export interface BookPricingConfigInterface {
-    readonly coating: Array<CoatingPricingConfigInterface>;
-    readonly printing: PrintingPricingConfigInterface;
-    readonly binding: Array<BookBindingPricingConfigInterface>;
-    readonly paper: Array<PaperPricingConfigInterface>;
+export interface BookPricingConfig {
+    readonly coating: Array<CoatingPricingConfig>;
+    readonly printing: PrintingPricingConfig;
+    readonly binding: Array<BookBindingPricingConfig>;
+    readonly paper: Array<PaperPricingConfig>;
 }
 // 紙材計價
-export interface PaperPricingConfigInterface extends ComponentPricingConfigInterface {
+export interface PaperPricingConfig extends ComponentPricingConfig {
     unit: "Meter" | "SquareMeter"   // 以「一公尺／一平方公尺」為單位
-    paper: PaperInterface;
+    paper: Paper;
 }
 // 上膜計價
-export interface CoatingPricingConfigInterface extends ComponentPricingConfigInterface {
+export interface CoatingPricingConfig extends ComponentPricingConfig {
     unit: "Page" | "SquareMeter"    // 以「一面／一平方公尺」為單位
-    coat: CoatInterface;
+    coat: Coat;
 }
 // 印工計價
-export interface PrintingPricingConfigInterface extends ComponentPricingConfigInterface {
+export interface PrintingPricingConfig extends ComponentPricingConfig {
     unit: "Meter" | "SquareMeter"   // 以「一公尺／一平方公尺」為單位
 }
 // 裝訂方式
@@ -161,44 +164,46 @@ export const BINDING_OPTIONS = [
 export type BindingOption = typeof BINDING_OPTIONS[number];
 
 // 裝訂計價
-export interface BookBindingPricingConfigInterface extends ComponentPricingConfigInterface {
+export interface BookBindingPricingConfig extends ComponentPricingConfig {
     unit: "Copy";                   // 以「一份（一本書）」為單位
     bindingStyle: BindingOption;
 }
 
 /** ============ 產品參數選項 ============ */
 // 書籍可用選項:可用的紙質以及上膜
-export interface BookProductionOptionsInterface {
-    readonly validPaperTexturesForInnerPages: Array<PaperInterface>;
-    readonly validPaperTexturesForCover: Array<PaperInterface>;
-    readonly validCoatingStylesForInnerPages: Array<CoatInterface>;
-    readonly validCoatingStylesorCover: Array<CoatInterface>;
+export interface BookProductionOptions {
+    readonly validPaperTexturesForInnerPages: Array<Paper>;
+    readonly validPaperTexturesForCover: Array<Paper>;
+    readonly validCoatingStylesForInnerPages: Array<Coat>;
+    readonly validCoatingStylesorCover: Array<Coat>;
 }
 // 單張可用選項:可用的紙質以及上膜
-export interface SingleSheetProductionOptionsInterface {
-    readonly validPaperTextures: Array<PaperInterface>;
-    readonly validCoatingStyles: Array<PaperInterface>;
+export interface SingleSheetProductionOptions {
+    readonly validPaperTextures: Array<Paper>;
+    readonly validCoatingStyles: Array<Paper>;
 }
 
 
 /** ============ 審稿 ============ */
 // 審稿資訊物件
-export interface ReviewItemInterface {
-    readonly reviewId: string;
-    readonly numberOfModels: number;
-    readonly status: ReviewStatusInterface;
-    readonly product: ProductInterface;
-    readonly models: Map<number, ReviewModelInterface>;    
+export interface ReviewItem {
+    status: ReviewStatus;
+    product: ProductInterface;
+    models: Map<number, ReviewModel>;    
 }
 // 審稿狀態
-export interface ReviewStatusInterface {
-    readonly uploadFileStatuses: Map<string, UploadFileStatusInterface>;
-    readonly progress: ReviewingProgress;
+export interface ReviewStatus {
+    reviewId: string;
+    numberOfModels: number;
+    modelIds: Array<string>;
+    numberOfFiles: number;
+    uploadFileStatuses: Map<string, UploadFileStatus>;
+    progress: ReviewingProgress;
 }
 // 登記審稿資訊
-export interface ReviewRegistrationInfoInterface {
-    readonly numberOfModels: number;
-    readonly product: ProductInterface;
+export interface ReviewRegistrationInfo {
+    numberOfModels: number;
+    product: ProductInterface;
 }
 
 /**
@@ -222,14 +227,13 @@ export type ReviewingProgress = typeof REVIEWING_PROGRESS[number];
 // 上傳檔案的狀態
 export const UPLOAD_FILE_PROCESSING_STAGES = [
     "UPLOAD",                     // 已登記上傳檔案，但檔案還沒上傳完
-    "GENERATING_PREVIEW_PAGES",   // 已收到上傳檔，但正在生成預覽圖
-    "GENERATING_RESULTING_PAGES", // 已生成預覽圖，但PDF還沒好
+    "GENERATING_PRINTABLE_PAGES",   // 已收到上傳檔，但正在生成每一頁單獨的PDF和JPEG
     "FINISHED"                    // 處理完畢
 ] as const;
 
 export type UploadFileProcessingStage = typeof UPLOAD_FILE_PROCESSING_STAGES[number];
 // 上傳檔案的資訊
-export interface UploadFileStatusInterface {
+export interface UploadFileStatus {
     readonly fileName: string;
     readonly currentStage: UploadFileProcessingStage;
     readonly hasError: boolean;
@@ -240,15 +244,16 @@ export interface UploadFileStatusInterface {
     readonly errorStage?: UploadFileProcessingStage;   
 }
 // 審稿頁與框的配對
-export interface ReviewModelInterface {
+export interface ReviewModel {
     readonly modelIndexInReviewItem: number;
-    framedPages: Map<string, FramedPageInterface>;
+    framedPages: Map<string, FramedPage>;
 }
 // 審稿頁與框的資訊
-export interface FramedPageInterface {
-    inputPagePreviewAddress?: string;
-    printableResultingImageAddress?: string;
-    printableResultingFileAddress?: string;
+export interface FramedPage {
+    sourcePageImageFileId?: string;
+    sourcePagePrintableFileId?: string;
+    resultingImageFileId?: string;
+    resultingPrintableFileId?: string;
     pageIndex: string; 
     positionX?: number;
     positionY?: number;
@@ -256,3 +261,24 @@ export interface FramedPageInterface {
     scaleY?: number;
     rotationDegree?: number;
 }
+
+
+/** ============ 集單＆組版 ============ */
+// 數位印刷機
+export interface Printer {
+	needJdf: boolean;
+	jdfRequestUrl?: string;
+	paperStockLimits: PaperStockLimits;
+	validPaperNames: string[];
+};
+
+// 紙材限制
+interface PaperStockLimits {
+	stockType: "sheet" | "roll";    // 紙材類型：單張／卷裝
+	maxWidth: number;               // 寬度上限
+	minWidth: number;               // 寬度下限
+	maxHeight: number;              // 高度上限
+	minHeight: number;              // 高度下限
+	maxThickness: number;           // 厚度上限
+	minThickness: number;           // 厚度下限
+};

@@ -4,15 +4,14 @@ import * as Pricing from "./Pricing";
 import * as Review from "./Review";
 import * as Interfaces from "./Interfaces";
 import { Exclude, Expose, Type } from "class-transformer";
-import { BookInterface, BookSubtypeName, CoatInterface, PaperInterface, PaperMaterialInterface, ProductInterface, ProductSubtypeName, PRODUCT_SUBTYPES, SaddleStichBindingBookInterface, SingleSheetInterface } from "./Interfaces";
 
 export const PRODUCT_TYPE_DISCRIMINATOR = {
     property: '__productSubType',
-    subTypes: PRODUCT_SUBTYPES
+    subTypes: Interfaces.PRODUCT_SUBTYPES
 };
 
 @Exclude()
-export abstract class Product implements ProductInterface {
+export abstract class Product implements Product {
     readonly abstract __productSubType: ProductSubtypeName;
     protected abstract _priceCalculator?: Pricing.PriceCalculator;
     protected abstract _production?: Production.Production;
@@ -61,7 +60,7 @@ export abstract class Product implements ProductInterface {
     protected abstract createFrameDictionary(): Review.FrameDictionary;
 }
 
-export class SingleSheet extends Product implements SingleSheetInterface {
+export class SingleSheet extends Product implements SingleSheet {
     readonly __productSubType: "SingleSheet" = "SingleSheet";
     protected _production?: Production.SingleSheetProduction;    
     protected _frameDictionary?: Review.SingleSheetFrameDictionary;
@@ -132,7 +131,7 @@ class Page {
 }
 
 
-export class Paper implements PaperInterface {
+export class Paper implements Paper {
     constructor(
         readonly material: PaperMaterial,
         readonly thickness: number,
@@ -141,22 +140,22 @@ export class Paper implements PaperInterface {
     ) {}
 }
 
-export class PaperMaterial implements PaperMaterialInterface {
+export class PaperMaterial implements PaperMaterial {
     constructor(
         readonly name: string,
         readonly aliases: Array<string>
     ) {}
 }
 
-export class Coat implements CoatInterface {
+export class Coat implements Coat {
     constructor (
         readonly name: string,
         readonly chineseName: string
     ) {}
 }
 
-export abstract class Book extends Product implements BookInterface {
-    readonly abstract __productSubType: BookSubtypeName
+export abstract class Book extends Product implements Book {
+    readonly abstract __productSubType: Interfaces.BookSubtypeName
     protected abstract readonly cover: BookCover;
     protected abstract _production?: Production.BookProduction;
     protected innerPages : {
@@ -203,7 +202,7 @@ class SaddleStichBindingBookCover extends BookCover {
 
 }
 
-export class SaddleStichBindingBook extends Book implements SaddleStichBindingBookInterface {
+export class SaddleStichedBook extends Book implements Interfaces.SaddleStichedBook {
     readonly __productSubType: "SaddleStichBindingBook" = "SaddleStichBindingBook";
     protected _production?: Production.SaddleStichBindingBookProduction;
     protected _frameDictionary?: Review.SaddleStichBindindBookFrameDictionary;
@@ -247,7 +246,87 @@ export class SaddleStichBindingBook extends Book implements SaddleStichBindingBo
     
 }
 
+abstract class PerfectBoundBook extends Book implements Interfaces.PerfectBoundBook {
+    readonly __productSubType = "PerfectBoundBook";
+    constructor(
+        public coverWidth: number,
+        public coverHeight: number,
+        public numberOfPages: number,
+        public pagingDirection: Interfaces.BookPagingDirection,
+        public coverPaperTexture: Paper,
+        public innerPagesPaperTexture: Paper,
+        public coverCoating?: Coat,
+        public innerPageCoating?: Coat,
+        public hardCovered: boolean = false,
+        public threadSewn: boolean = false,
+        public spineStyle: "standard" | "rounded" = "standard",
+    ) {
+        super(
+            coverWidth,
+            coverHeight,
+            numberOfPages,
+            pagingDirection,
+            coverPaperTexture,
+            innerPagesPaperTexture,
+            coverCoating,
+            innerPageCoating
+        );
+    }
+}
 
-function Demo(): void {
+class SoftCoveredPerfectBoundBook extends PerfectBoundBook {
+    constructor(
+        public coverWidth: number,
+        public coverHeight: number,
+        public numberOfPages: number,
+        public pagingDirection: Interfaces.BookPagingDirection,
+        public coverPaperTexture: Paper,
+        public innerPagesPaperTexture: Paper,
+        public coverCoating?: Coat,
+        public innerPageCoating?: Coat,
+        public threadSewn: boolean = false,
+    ) {
+        super(
+            coverWidth,
+            coverHeight,
+            numberOfPages,
+            pagingDirection,
+            coverPaperTexture,
+            innerPagesPaperTexture,
+            coverCoating,
+            innerPageCoating,
+            false,
+            threadSewn,
+            "standard"
+        );
+    }
+}
 
+class HardCoveredPerfectBoundBook extends PerfectBoundBook {
+    constructor(
+        public coverWidth: number,
+        public coverHeight: number,
+        public numberOfPages: number,
+        public pagingDirection: Interfaces.BookPagingDirection,
+        public coverPaperTexture: Paper,
+        public innerPagesPaperTexture: Paper,
+        public coverCoating?: Coat,
+        public innerPageCoating?: Coat,
+        public threadSewn: boolean = false,
+        public spineStyle: "standard" | "rounded" = "standard",
+    ) {
+        super(
+            coverWidth,
+            coverHeight,
+            numberOfPages,
+            pagingDirection,
+            coverPaperTexture,
+            innerPagesPaperTexture,
+            coverCoating,
+            innerPageCoating,
+            true,
+            threadSewn,
+            spineStyle
+        );
+    }
 }

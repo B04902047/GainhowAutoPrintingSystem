@@ -1,6 +1,6 @@
 import * as Product from "./Product"
 import { Exclude, Expose, plainToClass, Transform, Type } from 'class-transformer';
-import { FramedPageInterface, ReviewingProgress, ReviewItemInterface, ReviewModelInterface, ReviewRegistrationInfoInterface, ReviewStatusInterface, UploadFileProcessingStage, UploadFileStatusInterface } from "./Interfaces";
+import { FramedPage, ReviewingProgress, ReviewItem, ReviewModel, ReviewRegistrationInfo, ReviewStatus, UploadFileProcessingStage, UploadFileStatus } from "./Interfaces";
 
 
 export abstract class FrameDictionary {
@@ -206,7 +206,7 @@ class PerfectBindingBookFrameDictionary extends BookFrameDictionary {
     }
 }
 
-export class ReviewRegistrationInfo implements ReviewRegistrationInfoInterface{
+export class ReviewRegistrationInfo implements ReviewRegistrationInfo{
     constructor (
         public readonly numberOfModels: number,
         public readonly product: Product.Product,
@@ -217,7 +217,7 @@ export class ReviewRegistrationInfo implements ReviewRegistrationInfoInterface{
 }
 
 
-export class ReviewItem implements ReviewItemInterface {
+export class ReviewItem implements ReviewItem {
     
     @Exclude()
     protected _models: Map<number, ReviewModel> = new Map();
@@ -275,7 +275,7 @@ export class ReviewItem implements ReviewItemInterface {
     }
 }
 
-export class ReviewModel implements ReviewModelInterface {
+export class ReviewModel implements ReviewModel {
 
     @Exclude()
     protected _framedPages: Map<string, FramedPage> = new Map();
@@ -345,7 +345,7 @@ export class ReviewModel implements ReviewModelInterface {
     }
 }
 
-export class ReviewStatus implements ReviewStatusInterface {
+export class ReviewStatus implements ReviewStatus {
 
     @Type(() => UploadFileStatus)
     public uploadFileStatuses: Array<UploadFileStatus>;
@@ -361,7 +361,7 @@ export class ReviewStatus implements ReviewStatusInterface {
     }
 }
 
-export class FramedPage implements FramedPageInterface {   
+export class FramedPage implements FramedPage {   
     inputPagePreviewAddress?: string;
     printableResultingImageAddress?: string;
     printableResultingFileAddress?: string;
@@ -436,7 +436,7 @@ export class FramedPage implements FramedPageInterface {
     // cleanFile? 空白頁? 選擇了頁是不是可以改選擇用空白頁 
 }
 
-export class UploadFileStatus implements UploadFileStatusInterface {
+export class UploadFileStatus implements UploadFileStatus {
 
     constructor (
         readonly fileName: string,
