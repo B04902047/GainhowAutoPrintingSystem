@@ -1,6 +1,6 @@
 import * as Product from "./Product"
 import { Exclude, Expose, plainToClass, Transform, Type } from 'class-transformer';
-import { FramedPage, ReviewingProgress, ReviewItem, ReviewModel, ReviewRegistrationInfo, ReviewStatus, UploadFileProcessingStage, UploadFileStatus } from "./Interfaces";
+import { FramedPage, ReviewingProgress, ReviewItem, ReviewModel, ReviewRegistrationInfo, ReviewStatus, UploadFileProcessingStage, UploadFileStatus } from "./Interface";
 
 
 export abstract class FrameDictionary {

@@ -1,5 +1,4 @@
 
-import * as Product from "./Product";
 
 /** ============ 通訊錯誤 ============ */
 export interface TransactionError extends Error {
@@ -27,14 +26,7 @@ export type ProductSubtypeName
     = "SingleSheet"
     | BookSubtypeName;
 
-export const PRODUCT_SUBTYPES: {
-    name: ProductSubtypeName; value: any
-}[] = [
-    { name : "SingleSheet", value: Product.SingleSheet },
-    { name : "SaddleStichedBook", value: Product.SaddleStichedBook },
-];
-
-export interface ProductInterface {
+export interface Product {
     readonly __productSubType: ProductSubtypeName;
 }
 
@@ -47,7 +39,6 @@ export interface ProductInterface {
 export const BOOK_SUBTYPE_NAMES = [
     "SaddleStichedBook",    // 騎馬釘
     "PerfectBoundBook",     // 膠裝（純膠裝／穿線膠裝／方背精裝／圓背精裝／穿線方背精裝／穿線圓背精裝）
-    "EqualSoftcoverBook",   // 平裝
 ] as const;
 export type BookSubtypeName = typeof BOOK_SUBTYPE_NAMES[number];
 // 翻頁方式: 左翻與右翻
@@ -59,7 +50,7 @@ export const BOOK_PAGING_DIRECTIONS = [
 export type BookPagingDirection = typeof BOOK_PAGING_DIRECTIONS[number];
 
 // 書籍參數
-export interface Book extends ProductInterface {
+export interface Book extends Product {
     readonly __productSubType: BookSubtypeName;
     readonly coverWidth: number;                    // 成品寬
     readonly coverHeight: number;                   // 成品高
@@ -88,19 +79,11 @@ export interface SaddleStichedBook extends Book {
     readonly __productSubType: "SaddleStichedBook";
 }
 
-/**
- * 平裝書
- */
-export interface EqualSoftcoverBook extends Book {
-    readonly __productSubType: "EqualSoftcoverBook";
-}
-
 
 /**
- * 單張  
- * 
+ * 單張
  */
-export interface SingleSheet extends ProductInterface  {
+export interface SingleSheet extends Product  {
     readonly __productSubType: "SingleSheet";
     readonly width: number,
     readonly height: number,
@@ -198,7 +181,7 @@ export interface SingleSheetProductionOptions {
 // 審稿資訊物件
 export interface ReviewItem {
     status: ReviewStatus;
-    product: ProductInterface;
+    product: Product;
     models: Map<number, ReviewModel>;    
 }
 // 審稿狀態
@@ -213,7 +196,7 @@ export interface ReviewStatus {
 // 登記審稿資訊
 export interface ReviewRegistrationInfo {
     numberOfModels: number;
-    product: ProductInterface;
+    product: Product;
 }
 
 /**
