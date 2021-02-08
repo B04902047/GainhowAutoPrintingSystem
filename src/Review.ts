@@ -3,208 +3,24 @@ import { Exclude, Expose, plainToClass, Transform, Type } from 'class-transforme
 import { FramedPage, ReviewingProgress, ReviewItem, ReviewModel, ReviewRegistrationInfo, ReviewStatus, UploadFileProcessingStage, UploadFileStatus } from "./Interface";
 
 
-export abstract class FrameDictionary {
-    private frames: Map<string, Frame>;
-    constructor(
-        readonly product: Product.Product  
-        ) {
-            this.frames = this.createFrames();
-    }
-    public get frameIndices(): Array<string> {
-        return Object.keys(this.frames);
-    }
-    public getFrame(frameIndex: string): Frame | undefined {
-        return this.frames.get(frameIndex);
-    }
-    
-    protected abstract createFrames(): Map<string, Frame>;
-}
 
-export abstract class Frame {
-    public readonly foldLines: Array<Line>;   // 有可能是0條，但不會是undefined
-    public readonly cutLines: Array<Line>;    // 有可能是0條，但不會是undefined
-    constructor(
-        protected maxWidth: number,
-        protected maxHeight: number
-    ) {
-        //super(width,height);
-        this.foldLines = this.createFoldLines();
-        this.cutLines = this.createCutLines();
-    }
 
-    protected abstract createFoldLines(): Array<Line>;
-    protected abstract createCutLines(): Array<Line>;
-}
 
-export class Line {
-    constructor(
-        readonly startX: number,
-        readonly startY: number,
-        readonly endX: number,
-        readonly endY: number,
-    ) {}
-}
 
-export abstract class RectangleFrame extends Frame {
-    constructor(
-        protected width: number,
-        protected height: number
-    ) {
-        super(width, height);
-    }
-}
 
-class BleededRectangleFrame extends RectangleFrame {
-    protected createFoldLines(): Line[] {
-        return [];
-    }
-    protected createCutLines(): Line[] {
-        let leftCutLine: Line = new Line(
-            this.cutError, 0,
-            this.cutError, this.maxHeight
-        );
-        let rightCutLine: Line = new Line(
-            this.maxWidth - this.cutError, 0,
-            this.maxWidth - this.cutError, this.maxHeight
-        );
-        let topCutLine: Line = new Line(
-            0, this.cutError,
-            this.maxWidth, this.cutError
-        );
-        let bottomCutLine: Line = new Line(
-            0, this.maxHeight - this.cutError,
-            this.maxWidth, this.maxHeight - this.cutError
-        );
-        return [
-            leftCutLine,
-            rightCutLine,
-            topCutLine,
-            bottomCutLine
-        ];
-    }
 
-    constructor(
-        public readonly widthWithoutBleeding: number,
-        public readonly heightWithoutBleeding: number,
-        public readonly cutError: number,
-    ) {
-        super(
-            widthWithoutBleeding + (2 * cutError),
-            heightWithoutBleeding + (2 * cutError)
-        );
-    }
-}
 
-abstract class BookCoverFrame extends BleededRectangleFrame {
-    constructor(
-        widthWithoutBleeding: number,
-        heightWithoutBleeding: number,
-        cutError: number
-    ) {
-        super(
-            widthWithoutBleeding,
-            heightWithoutBleeding,
-            cutError,
-        );
-    }
-    protected abstract createFoldLines(): Line[];
-}
 
-abstract class BookFrameDictionary extends FrameDictionary {
-    protected coverFrame: BookCoverFrame;
-    protected innerPageFrames: Map<string, RectangleFrame>;
-    
-    constructor(product: Product.Book)   {
-        super(product);
-        this.coverFrame = this.createBookCoverFrame();
-        let innerFramePrototype: BleededRectangleFrame = this.createInnerPageFramePrototype();
-        this.innerPageFrames =new Map<string, RectangleFrame>();;
-        for (let i=1; i<=product.numberOfPages; i++) {
-            this.innerPageFrames.set(String(i), innerFramePrototype);
-        }
-    }
-    protected createFrames(): Map<string, RectangleFrame> {
-        let frames = new Map<string, RectangleFrame>();
-        frames.set('cover', this.coverFrame);
-        frames = Object.assign(frames, this.innerPageFrames);
-        return frames;
-    }
 
-    protected abstract createBookCoverFrame(): BookCoverFrame;
-    protected abstract createInnerPageFramePrototype(): BleededRectangleFrame;
-}
 
-class SaddleStichBindindBookCoverFrame extends BookCoverFrame {
-    protected createFoldLines(): Line[] {
-        let middle: number = this.maxWidth / 2;
-        let middleLine: Line = new Line(
-            middle, 0,
-            middle, this.maxHeight
-        )
-        return [middleLine];
-    }
-}
-export class SingleSheetFrameDictionary extends FrameDictionary {
-    constructor(
-        readonly product: Product.SingleSheet 
-        ) {
-        super(product);
-    }
-    private static readonly CUT_ERROR = 2;
-    protected createFrames(): Map<string, RectangleFrame> {
-        let frame = new BleededRectangleFrame (
-            this.product.width,
-            this.product.height,
-            SingleSheetFrameDictionary.CUT_ERROR,
-        );
-        let frames = new Map<string, RectangleFrame>();
-        frames.set("frontSide", frame);
-        if (this.product.isDoubleSided) {
-            frames.set("backSide", frame);
-        }
-        return frames;
-    }
-}
 
-export class SaddleStichBindindBookFrameDictionary extends BookFrameDictionary {
-    private static readonly INNER_PAGE_CUT_ERROR = 3;
-    private static readonly COVER_CUT_ERROR = 3;
-    constructor(
-        readonly product: Product.SaddleStichBindingBook
-    ) {
-        super(product);       
-    }
-    protected createBookCoverFrame(): SaddleStichBindindBookCoverFrame {
-        return new SaddleStichBindindBookCoverFrame(
-            this.product.coverWidth,
-            this.product.coverHeight,
-            SaddleStichBindindBookFrameDictionary.COVER_CUT_ERROR
-        );
-    }
-    protected createInnerPageFramePrototype(): BleededRectangleFrame {
-        return new BleededRectangleFrame(
-            this.product.coverWidth,
-            this.product.coverHeight,
-            SaddleStichBindindBookFrameDictionary.INNER_PAGE_CUT_ERROR
-        );
-    }
-}
-class ButterflyBindingBookFrameDictionary extends BookFrameDictionary {
-    protected createBookCoverFrame(): BookCoverFrame {
-        throw new Error("Method not implemented.");
-    }
-    protected createInnerPageFramePrototype(): BleededRectangleFrame {
-        throw new Error("Method not implemented.");
-    }
-}
-class PerfectBindingBookFrameDictionary extends BookFrameDictionary {
-    protected createBookCoverFrame(): BookCoverFrame {
-        throw new Error("Method not implemented.");
-    }
-    protected createInnerPageFramePrototype(): BleededRectangleFrame {
-        throw new Error("Method not implemented.");
-    }
-}
+
+
+
+
+
+
+
 
 export class ReviewRegistrationInfo implements ReviewRegistrationInfo{
     constructor (

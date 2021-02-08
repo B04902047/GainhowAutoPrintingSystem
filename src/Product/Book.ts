@@ -6,15 +6,22 @@ import { Product } from "./Product";
 export abstract class Book extends Product implements BookInterface {
     readonly abstract __productSubType: BookSubtypeName
     constructor(
-        public coverWidth: number,
-        public coverHeight: number,
+        public width: number,
+        public height: number,
         public numberOfPages: number,
         public pagingDirection: BookPagingDirection,
-        public coverPaperTexture: Paper,
-        public innerPagesPaperTexture: Paper,
+        public coverPaper: Paper,
+        public innerPagesPaper: Paper,
         public coverCoating?: Coat,
         public innerPageCoating?: Coat,
         ) {
         super();
+    }
+
+    /**
+     * 書背寬度（mm）
+     */
+    public get spineWidth(): number {
+        return this.numberOfPages / 2 * this.innerPagesPaper.thickness;
     }
 }

@@ -52,12 +52,12 @@ export type BookPagingDirection = typeof BOOK_PAGING_DIRECTIONS[number];
 // 書籍參數
 export interface Book extends Product {
     readonly __productSubType: BookSubtypeName;
-    readonly coverWidth: number;                    // 成品寬
-    readonly coverHeight: number;                   // 成品高
+    readonly width: number;                         // 成品寬
+    readonly height: number;                        // 成品高
     readonly numberOfPages: number;                 // 總頁數
     readonly pagingDirection: BookPagingDirection;  // 翻頁方向
-    readonly coverPaperTexture: Paper;              // 封面紙張種類
-    readonly innerPagesPaperTexture: Paper;         // 內頁紙張種類
+    readonly coverPaper: Paper;              // 封面紙張種類
+    readonly innerPagesPaper: Paper;         // 內頁紙張種類
     readonly coverCoating?: Coat;                   // 封面上膜
     readonly innerPageCoating?: Coat;               // 內頁上膜
 }
@@ -98,8 +98,8 @@ export interface SingleSheet extends Product  {
 export interface Paper {
     name: string;
     material: PaperMaterial;
-    thickness: number; // 厚度
-    weight: number;    // 單位面積重量
+    thickness: number; // 厚度（mm）
+    weight: number;    // 單位面積重量（g/m^2）
     isSmooth: boolean; // 表面是否光滑（會影響能否上膜）
     description?: string;
 }

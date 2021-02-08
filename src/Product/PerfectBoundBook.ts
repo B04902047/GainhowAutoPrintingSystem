@@ -3,15 +3,17 @@ import {BookPagingDirection, PerfectBoundBook as PerfectBoundBookInterface} from
 import { Paper } from "../Material/Paper";
 import { Coat } from "../Material/Coat";
 import { Type } from "class-transformer";
+import { FrameDictionary } from "../Review/FrameDictionary";
+import { PerfectBoundBookFrameDictionary } from "../Review/PerfectBoundBookFrameDictionary";
 
 export abstract class PerfectBoundBook extends Book implements PerfectBoundBookInterface {
     readonly __productSubType = "PerfectBoundBook";
 
     @Type(() => Paper)
-    public coverPaperTexture!: Paper;
+    public coverPaper!: Paper;
 
     @Type(() => Paper)
-    public innerPagesPaperTexture!: Paper;
+    public innerPagesPaper!: Paper;
 
     @Type(() => Coat)
     public coverCoating?: Coat;
@@ -19,8 +21,8 @@ export abstract class PerfectBoundBook extends Book implements PerfectBoundBookI
     @Type(() => Coat)
     public innerPageCoating?: Coat;
     constructor(
-        public coverWidth: number,
-        public coverHeight: number,
+        public width: number,
+        public height: number,
         public numberOfPages: number,
         public pagingDirection: BookPagingDirection,
         coverPaperTexture: Paper,
@@ -32,8 +34,8 @@ export abstract class PerfectBoundBook extends Book implements PerfectBoundBookI
         public spineStyle: "standard" | "rounded" = "standard",
     ) {
         super(
-            coverWidth,
-            coverHeight,
+            width,
+            height,
             numberOfPages,
             pagingDirection,
             coverPaperTexture,
@@ -41,5 +43,10 @@ export abstract class PerfectBoundBook extends Book implements PerfectBoundBookI
             coverCoating,
             innerPageCoating
         );
+    }
+
+    protected _frameDictionary?: FrameDictionary;
+    protected createFrameDictionary(): FrameDictionary {
+        return new PerfectBoundBookFrameDictionary(this);
     }
 }

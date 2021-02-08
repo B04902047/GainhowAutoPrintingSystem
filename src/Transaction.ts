@@ -1,5 +1,5 @@
 
-import * as Interfaces from "./Interfaces";
+import * as Interfaces from "./Interface";
 
 
 export class TransactionError extends Error implements Interfaces.TransactionError {
