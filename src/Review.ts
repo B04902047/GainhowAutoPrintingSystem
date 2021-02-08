@@ -5,6 +5,7 @@ import ReviewItem from "./Review/ReviewItem";
 import ReviewStatus from "./Review/ReviewStatus";
 import UploadFileStatus from "./Review/UploadFileStatus";
 import ReviewRegistrationInfo from "./Review/ReviewRegistrationInfo";
+import ReviewReception from "./Review/ReviewReception";
 
 export default {
     FramedPage,
@@ -13,4 +14,5 @@ export default {
     ReviewStatus,
     UploadFileStatus,
     ReviewRegistrationInfo,
+    ReviewReception
 }
