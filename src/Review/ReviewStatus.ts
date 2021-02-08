@@ -1,4 +1,4 @@
-import { Type } from "class-transformer";
+import { deserialize, serialize, Type } from "class-transformer";
 import { ReviewingProgress, ReviewStatus as ReviewStatusInterface } from "../Interface";
 import UploadFileStatus from "./UploadFileStatus";
 
@@ -19,5 +19,11 @@ export default class ReviewStatus implements ReviewStatusInterface {
     ) {
         this.uploadFileStatuses = uploadFileStatuses;
         this.progress = progress;
+    }
+    public toJson(status: ReviewStatus): string {
+        return serialize(status);
+    }
+    public fromJson(text: string): ReviewStatus {
+        return deserialize(ReviewStatus, text);
     }
 }

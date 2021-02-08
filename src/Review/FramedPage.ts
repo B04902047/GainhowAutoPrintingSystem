@@ -13,7 +13,7 @@ export default class FramedPage implements FramedPageInterface {
     private _rotationDegree: number;
 
     @Exclude()
-    public readonly reviewModel: ReviewModel;
+    public reviewModel: ReviewModel;
 
     constructor (
         public readonly pageIndex: string,

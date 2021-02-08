@@ -4,7 +4,8 @@ import Product from "../Product/Product";
 import { PRODUCT_TYPE_DISCRIMINATOR } from "../Product"
 import ReviewModel from "./ReviewModel";
 import ReviewStatus from "./ReviewStatus";
-import { Exclude, Expose, Type } from "class-transformer";
+import { deserialize, Exclude, Expose, serialize, Type } from "class-transformer";
+import FramedPage from "./FramedPage";
 export default class ReviewItem implements ReviewItem {
     
     @Exclude()
@@ -65,5 +66,19 @@ export default class ReviewItem implements ReviewItem {
 
     public get frameDictionary(): FrameDictionary {
         return this.product.frameDictionary;
+    }
+
+    public static fromJson(text: string): ReviewItem {
+        let item: ReviewItem = deserialize(ReviewItem, text);
+        item.models.forEach((model: ReviewModel) => {
+            model.reviewItem = item;
+            model.framedPages.forEach((framedPage: FramedPage) => {
+                framedPage.reviewModel = model;
+            });
+        });
+        return item;
+    }
+    public static toJson(item: ReviewItem): string {
+        return serialize(item);
     }
 }

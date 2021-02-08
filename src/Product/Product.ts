@@ -2,7 +2,9 @@
 
 import * as Interface from "../Interface";
 import FrameDictionary from "../FrameDictionary/FrameDictionary";
+import { Exclude } from "class-transformer";
 
+@Exclude()
 export default abstract class Product implements Interface.Product {
     readonly abstract __productSubType: Interface.ProductSubtypeName;
     protected abstract _frameDictionary?: FrameDictionary;
