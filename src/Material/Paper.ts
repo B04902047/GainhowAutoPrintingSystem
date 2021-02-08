@@ -1,9 +1,8 @@
 import { Type } from "class-transformer";
-import {Paper as PaperInterface} from "../Interface";
-import { PaperMaterial } from "./PaperMaterial";
+import { Paper as PaperInterface } from "../Interface";
+import PaperMaterial from "./PaperMaterial";
 
-
-export class Paper implements PaperInterface {
+export default class Paper implements PaperInterface {
 
     @Type(() => PaperMaterial)
     readonly material: PaperMaterial;

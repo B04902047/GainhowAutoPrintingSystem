@@ -1,13 +1,12 @@
 
-import * as Review from "../Review";
-import * as Interfaces from "../Interface";
-import { Product } from "./Product";
+import {SingleSheet as SingleSheetInterface} from "../Interface";
+import Product from "./Product";
 import { Exclude, Type } from "class-transformer";
-import { Coat } from "../Material/Coat";
-import { Paper } from "../Material/Paper";
-import { SingleSheetFrameDictionary } from "../Review/SingleSheetFrameDictionary";
+import Coat from "../Material/Coat";
+import Paper from "../Material/Paper";
+import SingleSheetFrameDictionary from "../FrameDictionary/SingleSheetFrameDictionary";
 
-export class SingleSheet extends Product implements Interfaces.SingleSheet {
+export default class SingleSheet extends Product implements SingleSheetInterface {
     readonly __productSubType: "SingleSheet" = "SingleSheet";
     
     @Exclude()  

@@ -1,7 +1,7 @@
 
-import {Coat as CoatInterface} from "../Interface";
+import { Coat as CoatInterface } from "../Interface";
 
-export class Coat implements CoatInterface {
+export default class Coat implements CoatInterface {
     constructor (
         readonly name: string,
         readonly chineseName: string

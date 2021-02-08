@@ -1,12 +1,12 @@
-import { Book } from "../Product/Book";
-import { BleededRectangleFrame } from "./BleededRectangleFrame";
-import { BookCoverFrame } from "./BookCoverFrame";
-import { FrameDictionary } from "./FrameDictionary";
-import { RectangleFrame } from "./RectangleFrame";
+import Book from "../Product/Book";
+import BleededRectangleFrame from "../Frame/BleededRectangleFrame";
+import BookCoverFrame from "../Frame/BookCoverFrame";
+import FrameDictionary from "./FrameDictionary";
+import RectangleFrame from "../Frame/RectangleFrame";
 
-export abstract class BookFrameDictionary extends FrameDictionary {
+export default abstract class BookFrameDictionary extends FrameDictionary {
     protected coverFrame: BookCoverFrame;
-    protected innerPageFrames: Map<string, RectangleFrame>;
+    protected innerPageFrames: Map<string, BleededRectangleFrame>;
     
     constructor(product: Book)   {
         super(product);
@@ -19,6 +19,6 @@ export abstract class BookFrameDictionary extends FrameDictionary {
         frames = Object.assign(frames, this.innerPageFrames);
         return frames;
     }
-    protected abstract createInnerPageFrames(): Map<string, RectangleFrame>;
+    protected abstract createInnerPageFrames(): Map<string, BleededRectangleFrame>;
     protected abstract createBookCoverFrame(): BookCoverFrame;
 }

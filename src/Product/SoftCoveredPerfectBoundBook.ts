@@ -1,7 +1,7 @@
 import { BookPagingDirection } from "../Interface";
-import { Coat } from "../Material/Coat";
-import { Paper } from "../Material/Paper";
-import { PerfectBoundBook } from "./PerfectBoundBook";
+import Coat from "../Material/Coat";
+import Paper from "../Material/Paper";
+import PerfectBoundBook from "./PerfectBoundBook";
 
 export class SoftCoveredPerfectBoundBook extends PerfectBoundBook {
     constructor(
@@ -9,8 +9,8 @@ export class SoftCoveredPerfectBoundBook extends PerfectBoundBook {
         public height: number,
         public numberOfPages: number,
         public pagingDirection: BookPagingDirection,
-        public coverPaperTexture: Paper,
-        public innerPagesPaperTexture: Paper,
+        public coverPaper: Paper,
+        public innerPagesPaper: Paper,
         public coverCoating?: Coat,
         public innerPageCoating?: Coat,
         public threadSewn: boolean = false,
@@ -20,8 +20,8 @@ export class SoftCoveredPerfectBoundBook extends PerfectBoundBook {
             height,
             numberOfPages,
             pagingDirection,
-            coverPaperTexture,
-            innerPagesPaperTexture,
+            coverPaper,
+            innerPagesPaper,
             coverCoating,
             innerPageCoating,
             false,

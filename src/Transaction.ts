@@ -1,10 +1,10 @@
 
-import * as Interfaces from "./Interface";
+import { FailureType, TransactionError as TransactionErrorInterface } from "./Interface";
 
 
-export class TransactionError extends Error implements Interfaces.TransactionError {
+export class TransactionError extends Error implements TransactionErrorInterface {
     constructor(
-        readonly failureType: Interfaces.FailureType,
+        readonly failureType: FailureType,
         message?: string
     ) {
         super(message);

@@ -1,10 +1,10 @@
-import { SaddleStichedBook } from "../Product/SaddleStichedBook";
-import { BleededRectangleFrame } from "./BleededRectangleFrame";
-import { BookFrameDictionary } from "./BookFrameDictionary";
-import { RectangleFrame } from "./RectangleFrame";
-import { SaddleStitchedBookCoverFrame } from "./SaddleStitchedBookCoverFrame";
+import SaddleStichedBook from "../Product/SaddleStichedBook";
+import BleededRectangleFrame from "../Frame/BleededRectangleFrame";
+import BookFrameDictionary from "./BookFrameDictionary";
+import RectangleFrame from "../Frame/RectangleFrame";
+import SaddleStitchedBookCoverFrame from "../Frame/SaddleStitchedBookCoverFrame";
 
-export class SaddleStitchedBookFrameDictionary extends BookFrameDictionary {
+export default class SaddleStitchedBookFrameDictionary extends BookFrameDictionary {
     private static readonly INNER_PAGE_CUT_ERROR = 3;
     private static readonly COVER_CUT_ERROR = 3;
     constructor(
@@ -19,9 +19,9 @@ export class SaddleStitchedBookFrameDictionary extends BookFrameDictionary {
             SaddleStitchedBookFrameDictionary.COVER_CUT_ERROR
         );
     }
-    protected createInnerPageFrames(): Map<string, RectangleFrame> {
+    protected createInnerPageFrames(): Map<string, BleededRectangleFrame> {
         let innerFramePrototype: BleededRectangleFrame = this.createInnerPageFramePrototype();
-        let innerPageFrames = new Map<string, RectangleFrame>();
+        let innerPageFrames = new Map<string, BleededRectangleFrame>();
         for (let i=1; i<=this.product.numberOfPages; i++) {
             this.innerPageFrames.set(String(i), innerFramePrototype);
         }

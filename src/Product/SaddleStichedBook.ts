@@ -1,11 +1,11 @@
-import { Book } from "./Book";
+import Book from "./Book";
 import {BookPagingDirection, SaddleStichedBook as SaddleStichedBookInterface} from "../Interface";
-import { Paper } from "../Material/Paper";
-import { Coat } from "../Material/Coat";
-import { SaddleStitchedBookFrameDictionary } from "../Review/SaddleStitchedBookFrameDictionary";
-import { FrameDictionary } from "../Review/FrameDictionary";
+import Paper from "../Material/Paper";
+import Coat from "../Material/Coat";
+import SaddleStitchedBookFrameDictionary from "../FrameDictionary/SaddleStitchedBookFrameDictionary";
+import FrameDictionary from "../FrameDictionary/FrameDictionary";
 
-export class SaddleStichedBook extends Book implements SaddleStichedBookInterface {
+export default class SaddleStichedBook extends Book implements SaddleStichedBookInterface {
     readonly __productSubType: "SaddleStichedBook" = "SaddleStichedBook";
     protected _frameDictionary?: SaddleStitchedBookFrameDictionary;
     constructor(

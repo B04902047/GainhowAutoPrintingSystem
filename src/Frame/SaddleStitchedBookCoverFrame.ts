@@ -1,7 +1,7 @@
-import { BookCoverFrame } from "./BookCoverFrame";
-import { Line } from "./Line";
+import BookCoverFrame from "./BookCoverFrame";
+import Line from "./Line";
 
-export class SaddleStitchedBookCoverFrame extends BookCoverFrame {
+export default class SaddleStitchedBookCoverFrame extends BookCoverFrame {
     constructor(
         bookWidth: number,
         bookHeight: number,

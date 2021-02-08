@@ -1,13 +1,12 @@
-import { PerfectBoundBook } from "../Product/PerfectBoundBook";
-import { BleededRectangleFrame } from "./BleededRectangleFrame";
-import { BookCoverFrame } from "./BookCoverFrame";
-import { BookFrameDictionary } from "./BookFrameDictionary";
-import { Line } from "./Line";
-import { PerfectBoundBookSoftCoverFrame } from "./PerfectBoundBookSoftCoverFrame";
-import { PerfectBoundBookHardCoverFrame } from "./PerfectBoundHardCoverFrame";
-import { RectangleFrame } from "./RectangleFrame";
+import PerfectBoundBook from "../Product/PerfectBoundBook";
+import BleededRectangleFrame from "../Frame/BleededRectangleFrame";
+import BookCoverFrame from "../Frame/BookCoverFrame";
+import BookFrameDictionary from "./BookFrameDictionary";
+import Line from "../Frame/Line";
+import PerfectBoundBookSoftCoverFrame from "../Frame/PerfectBoundBookSoftCoverFrame";
+import PerfectBoundBookHardCoverFrame from "../Frame/PerfectBoundHardCoverFrame";
 
-export class PerfectBoundBookFrameDictionary extends BookFrameDictionary {
+export default class PerfectBoundBookFrameDictionary extends BookFrameDictionary {
     private static readonly INNER_PAGE_CUT_ERROR = 3;
     private static readonly COVER_CUT_ERROR = 3;
     private static readonly BOUND_SIDE_SAFE_DISTANCE: number = 5;
@@ -16,8 +15,8 @@ export class PerfectBoundBookFrameDictionary extends BookFrameDictionary {
     ) {
         super(product);       
     }
-    protected createInnerPageFrames(): Map<string, RectangleFrame> {
-        let innerPageFrames = new Map<string, RectangleFrame>();
+    protected createInnerPageFrames(): Map<string, BleededRectangleFrame> {
+        let innerPageFrames = new Map<string, BleededRectangleFrame>();
         if (this.product.pagingDirection === "BOTTOM_TO_TOP") {
             let pageFramePrototype = this.createBottomToTopPagedPageFramePrototype();
             for (let i=1; i<=this.product.numberOfPages; i++) {

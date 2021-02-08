@@ -1,12 +1,12 @@
-import { Book } from "./Book";
-import {BookPagingDirection, PerfectBoundBook as PerfectBoundBookInterface} from "../Interface";
-import { Paper } from "../Material/Paper";
-import { Coat } from "../Material/Coat";
+import Book from "./Book";
+import { BookPagingDirection, PerfectBoundBook as PerfectBoundBookInterface } from "../Interface";
+import Paper from "../Material/Paper";
+import Coat from "../Material/Coat";
 import { Type } from "class-transformer";
-import { FrameDictionary } from "../Review/FrameDictionary";
-import { PerfectBoundBookFrameDictionary } from "../Review/PerfectBoundBookFrameDictionary";
+import FrameDictionary from "../FrameDictionary/FrameDictionary";
+import PerfectBoundBookFrameDictionary from "../FrameDictionary/PerfectBoundBookFrameDictionary";
 
-export abstract class PerfectBoundBook extends Book implements PerfectBoundBookInterface {
+export default abstract class PerfectBoundBook extends Book implements PerfectBoundBookInterface {
     readonly __productSubType = "PerfectBoundBook";
 
     @Type(() => Paper)

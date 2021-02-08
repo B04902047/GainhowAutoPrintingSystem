@@ -1,9 +1,9 @@
-import { SingleSheet } from "../Product/SingleSheet";
-import { BleededRectangleFrame } from "./BleededRectangleFrame";
-import { FrameDictionary } from "./FrameDictionary";
-import { RectangleFrame } from "./RectangleFrame";
+import SingleSheet from "../Product/SingleSheet";
+import BleededRectangleFrame from "../Frame/BleededRectangleFrame";
+import FrameDictionary from "./FrameDictionary";
+import RectangleFrame from "../Frame/RectangleFrame";
 
-export class SingleSheetFrameDictionary extends FrameDictionary {
+export default class SingleSheetFrameDictionary extends FrameDictionary {
     constructor(
         readonly product: SingleSheet 
         ) {

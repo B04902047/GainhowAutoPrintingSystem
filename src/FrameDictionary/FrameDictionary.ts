@@ -1,7 +1,7 @@
-import { Product } from "../Product/Product";
-import { Frame } from "./Frame";
+import Product from "../Product/Product";
+import Frame from "../Frame/Frame";
 
-export abstract class FrameDictionary {
+export default abstract class FrameDictionary {
     private frames: Map<string, Frame>;
     constructor(
         readonly product: Product  

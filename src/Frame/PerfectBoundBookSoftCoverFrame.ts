@@ -1,7 +1,7 @@
-import { BookCoverFrame } from "./BookCoverFrame";
-import { Line } from "./Line";
+import BookCoverFrame from "./BookCoverFrame";
+import Line from "./Line";
 
-export class PerfectBoundBookSoftCoverFrame extends BookCoverFrame {
+export default class PerfectBoundBookSoftCoverFrame extends BookCoverFrame {
     constructor(
         readonly bookWidth: number,
         readonly bookHeight: number,

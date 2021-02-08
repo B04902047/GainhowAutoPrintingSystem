@@ -1,4 +1,4 @@
-export class Line {
+export default class Line {
     constructor(
         readonly startX: number,
         readonly startY: number,

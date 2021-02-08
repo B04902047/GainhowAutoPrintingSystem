@@ -1,9 +1,9 @@
 import { BookPagingDirection, BookSubtypeName, Book as BookInterface } from "../Interface";
-import { Coat } from "../Material/Coat";
-import { Paper } from "../Material/Paper";
-import { Product } from "./Product";
+import Coat from "../Material/Coat";
+import Paper from "../Material/Paper";
+import Product from "./Product";
 
-export abstract class Book extends Product implements BookInterface {
+export default abstract class Book extends Product implements BookInterface {
     readonly abstract __productSubType: BookSubtypeName
     constructor(
         public width: number,

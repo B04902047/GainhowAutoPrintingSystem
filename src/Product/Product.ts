@@ -1,9 +1,9 @@
 
-import * as Review from "../Review";
-import * as Interface from "../Interface";
-import { FrameDictionary } from "../Review/FrameDictionary";
 
-export abstract class Product implements Interface.Product {
+import * as Interface from "../Interface";
+import FrameDictionary from "../FrameDictionary/FrameDictionary";
+
+export default abstract class Product implements Interface.Product {
     readonly abstract __productSubType: Interface.ProductSubtypeName;
     protected abstract _frameDictionary?: FrameDictionary;
     static Coat: any;

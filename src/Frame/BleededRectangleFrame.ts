@@ -1,7 +1,7 @@
-import { Line } from "./Line";
-import { RectangleFrame } from "./RectangleFrame";
+import Line from "./Line";
+import RectangleFrame from "./RectangleFrame";
 
-export class BleededRectangleFrame extends RectangleFrame {
+export default class BleededRectangleFrame extends RectangleFrame {
     protected createSafeAreaLines(): Line[] {
         let twiceCutError: number = this.cutError * 2;
         let left: number = twiceCutError;

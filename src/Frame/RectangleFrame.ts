@@ -1,6 +1,6 @@
-import { Frame } from "./Frame";
+import Frame from "./Frame";
 
-export abstract class RectangleFrame extends Frame {
+export default abstract class RectangleFrame extends Frame {
     constructor(
         protected width: number,
         protected height: number

@@ -38,7 +38,7 @@ export interface Product {
 // 總共有的所有書籍類別: 騎馬釘、蝴蝶書、膠裝書
 export const BOOK_SUBTYPE_NAMES = [
     "SaddleStichedBook",    // 騎馬釘
-    "PerfectBoundBook",     // 膠裝（純膠裝／穿線膠裝／方背精裝／圓背精裝／穿線方背精裝／穿線圓背精裝）
+    "PerfectBoundBook",     // 膠裝（平裝（純膠裝）／穿線膠裝／方背精裝／圓背精裝／穿線方背精裝／穿線圓背精裝）
 ] as const;
 export type BookSubtypeName = typeof BOOK_SUBTYPE_NAMES[number];
 // 翻頁方式: 左翻與右翻
@@ -190,7 +190,7 @@ export interface ReviewStatus {
     numberOfModels: number;
     modelIds: Array<string>;
     numberOfFiles: number;
-    uploadFileStatuses: Map<string, UploadFileStatus>;
+    uploadFileStatuses: Array<UploadFileStatus>;
     progress: ReviewingProgress;
 }
 // 登記審稿資訊
@@ -227,14 +227,15 @@ export const UPLOAD_FILE_PROCESSING_STAGES = [
 export type UploadFileProcessingStage = typeof UPLOAD_FILE_PROCESSING_STAGES[number];
 // 上傳檔案的資訊
 export interface UploadFileStatus {
-    readonly fileName: string;
-    readonly currentStage: UploadFileProcessingStage;
-    readonly hasError: boolean;
-    readonly numberOfPages?: number;
-    readonly fileAddress?: string;
-    readonly previewPagesAddress?: Array<string>;
-    readonly printablePagesAddress?: Array<string>;
-    readonly errorStage?: UploadFileProcessingStage;   
+    fileName: string;
+    fileId: string;
+    currentStage: UploadFileProcessingStage;
+    hasError: boolean;
+    numberOfPages?: number;
+    fileAddress?: string;
+    previewPagesAddress?: Array<string>;
+    printablePagesAddress?: Array<string>;
+    errorStage?: UploadFileProcessingStage;   
 }
 // 審稿頁與框的配對
 export interface ReviewModel {

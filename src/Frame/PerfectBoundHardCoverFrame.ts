@@ -1,8 +1,8 @@
 
-import { BookCoverFrame } from "./BookCoverFrame";
-import { Line } from "./Line";
+import BookCoverFrame from "./BookCoverFrame";
+import Line from "./Line";
 
-export class PerfectBoundBookHardCoverFrame extends BookCoverFrame {
+export default class PerfectBoundBookHardCoverFrame extends BookCoverFrame {
     constructor(
         readonly bookWidth: number,         // 書的寬度（mm）
         readonly bookHeight: number,        // 書的高度（mm）

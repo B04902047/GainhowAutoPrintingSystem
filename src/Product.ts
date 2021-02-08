@@ -1,8 +1,10 @@
 
 import { ProductSubtypeName } from "./Interface";
-import { SingleSheet } from "./Product/SingleSheet";
-import { SaddleStichedBook } from "./Product/SaddleStichedBook";
-import { PerfectBoundBook } from "./Product/PerfectBoundBook";
+
+import Product from "./Product/Product";
+import SingleSheet from "./Product/SingleSheet";
+import SaddleStichedBook from "./Product/SaddleStichedBook";
+import PerfectBoundBook from "./Product/PerfectBoundBook";
 
 export const PRODUCT_SUBTYPES: {
     name: ProductSubtypeName; value: any
@@ -17,4 +19,11 @@ export const PRODUCT_TYPE_DISCRIMINATOR = {
     subTypes: PRODUCT_SUBTYPES
 };
 
-
+export default {
+    Product,
+    SingleSheet,
+    SaddleStichedBook,
+    PerfectBoundBook,
+    PRODUCT_SUBTYPES,
+    PRODUCT_TYPE_DISCRIMINATOR
+};
