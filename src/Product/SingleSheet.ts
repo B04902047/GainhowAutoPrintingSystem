@@ -9,12 +9,15 @@ import SingleSheetFrameDictionary from "../FrameDictionary/SingleSheetFrameDicti
 export default class SingleSheet extends Product implements SingleSheetInterface {
     readonly __productSubType: "SingleSheet" = "SingleSheet";
     
-    @Exclude()  
+    @Exclude()
     protected _frameDictionary?: SingleSheetFrameDictionary;
 
     protected createFrameDictionary(): SingleSheetFrameDictionary {
         return new SingleSheetFrameDictionary(this);
     }
+
+    @Type(() => Paper)
+    public paper: Paper;
 
     @Type(() => Coat)
     public frontSideCoat?: Coat;
@@ -26,11 +29,12 @@ export default class SingleSheet extends Product implements SingleSheetInterface
         public width: number,
         public height: number,
         public isDoubleSided: boolean,
-        public paper: Paper,
+        paper: Paper,
         frontSideCoat?: Coat,
         backSideCoat?: Coat
     ) {
         super();
+        this.paper = paper;
         this.frontSideCoat = frontSideCoat;
         this.backSideCoat = backSideCoat;
     }

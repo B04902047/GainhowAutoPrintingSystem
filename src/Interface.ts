@@ -41,6 +41,7 @@ export const BOOK_SUBTYPE_NAMES = [
     "PerfectBoundBook",     // 膠裝（平裝（純膠裝）／穿線膠裝／方背精裝／圓背精裝／穿線方背精裝／穿線圓背精裝）
 ] as const;
 export type BookSubtypeName = typeof BOOK_SUBTYPE_NAMES[number];
+
 // 翻頁方式: 左翻與右翻
 export const BOOK_PAGING_DIRECTIONS = [
     "LEFT_TO_RIGHT",    // 直式由左往右翻

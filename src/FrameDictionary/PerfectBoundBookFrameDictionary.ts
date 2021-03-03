@@ -46,8 +46,7 @@ export default class PerfectBoundBookFrameDictionary extends BookFrameDictionary
                     }
                     return innerPageFrames;
             }
-        }
-        
+        }   
     }
     protected createLeftInnerPageFramePrototype(): BleededRectangleFrame {
         class PerfectBoundLeftInnerPageFrame extends BleededRectangleFrame {
